@@ -1,9 +1,22 @@
 import telebot
-import pdfTodocx
+import tools
+import img2pdf
+from tools import Message_Details
 
 def bot(Token):
     
     bot = telebot.TeleBot(Token)
+    def Download(message):
+
+        message = Message_Details(message)
+
+        file_id = message.file_id()
+        fileinfo = bot.get_file(file_id)
+        image = bot.download_file(fileinfo.file_path)
+        with open(file_id, "wb") as imagee:
+            imagee.write(image)
+            
+        return (image)
 
     def loger(log):
         bot.send_message(1473554980, log)
@@ -12,8 +25,22 @@ def bot(Token):
     def start(message):
         bot.send_message(message.chat.id, "Hello!\nsend your pdf file to convet it to docx file (Word)")
 
+    @bot.message_handler(content_types="photo")
+    def imageToPdf(message):
+
+        image = Download(message)
+
+        file = tools.image_to_pdf(image)
+
+        with open(file, "rb") as pdf:
+            bot.send_document(message.chat.id,pdf)
+        
+
+
+
+
     @bot.message_handler(content_types="document")
-    def get_file(message):
+    def ToDocx(message):
 
         file_name = message.document.file_name
         file_format = file_name.split(".")[-1]
@@ -34,7 +61,7 @@ def bot(Token):
         with open(file_name, "wb") as Downloaded_file:
             Downloaded_file.write(file)
 
-        pdfTodocx.pdftodocx(file_name,f"{file_name}.docx")
+        tools.tools(file_name,f"{file_name}.docx")
         
         with open(f"{file_name}.docx", "rb") as DocxFile:
             bot.send_document(message.chat.id, DocxFile)

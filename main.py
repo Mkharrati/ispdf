@@ -1,9 +1,14 @@
-import pdfTodocx
+import tools
 import bot
 
-Token = "7901016275:AAHdtR2oWFkBoRivuv3x21lnhZvYv66UgZw"
+Token = "7278448230:AAGlXRBFOLDm_BpNYziML36zypKZWc5soCQ"
 while (True):
     try:
         bot.bot(Token)
     except Exception as log:
-        bot.loger(Token, log)
+        print(log)
+        try:
+            bot.loger(Token, log)
+        except:
+            pass
+
