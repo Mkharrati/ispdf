@@ -116,9 +116,15 @@ def bot(Token):
         bot.register_next_step_handler(message, Unlock)
     
     def Unlock(message):
-       file = Downloadimg(message)
-       with open("Unlock.pdf", "wb") as Newfile:
-           Newfile.write(file)
+        file_name = f"Unlock_{message.document.file_name}"
+       
+        file = Downloadimg(message)
+        with open(file_name, "wb") as Newfile:
+            Newfile.write(file)
+        with open(file_name, "rb") as SendFile:
+            bot.send_document(message.chat.id, SendFile)
+
+        
 
         
     bot.polling()
