@@ -1,5 +1,6 @@
 import img2pdf
 import random
+import pikepdf
 from pdf2docx import parse
 
 def random_name():
@@ -21,6 +22,12 @@ def image_to_pdf(image):
     with open(file_name, "wb") as pdf:
         pdf.write(img2pdf.convert(image))
     return file_name
+
+def Unlock(pdf):
+    file = pikepdf.open(pdf)
+    file.save("Unlocked_"+pdf)
+    return file
+
 
 
 class Message_Details:
