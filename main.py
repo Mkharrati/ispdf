@@ -1,7 +1,7 @@
 import tools
 import bot
 
-Token = "7901016275:AAF0gv9Q3K3XuypYnFmSbWze8dHOck3SDXg"
+Token = "7490729977:AAFBlIJp8DeVfkusr4oMptP_bye_ZsxsrDY"
 while (True):
     try:
         bot.bot(Token)

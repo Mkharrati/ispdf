@@ -36,7 +36,6 @@ def bot(Token):
 
     # Image to pdf
     @bot.message_handler(func=lambda message : "Image To PDF" in message.text)
-
     def get_image(message):
         back_keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
         back_keyboard.add(back_button)
