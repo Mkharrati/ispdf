@@ -1,6 +1,7 @@
 import img2pdf
 import random
 import pikepdf
+import os
 from pdf2docx import parse
 
 def random_name():
@@ -20,8 +21,27 @@ def tools(pdf_path, docx_path):
 def image_to_pdf(image):
     file_name = random_name()+".pdf"
     with open(file_name, "wb") as pdf:
-        pdf.write(img2pdf.convert(image))
+        pdf.write(img2pdf.convert(ary))
     return file_name
+
+def slistdir(path, chatID):
+    result = []
+    directory_path = path
+
+    # Get all files and directories
+    entries = os.listdir(directory_path)
+
+    # Sort by creation time (or last metadata change time on some platforms)
+    sorted_entries = sorted(
+        entries,
+        key=lambda entry: os.path.getctime(os.path.join(directory_path, entry))
+    )
+
+    # Print sorted entries
+    for entry in sorted_entries:
+        result.append(f"./{chatID}/{entry}")
+    print(entry)
+    return result
 
 def Unlock(pdf):
     file = pikepdf.open(pdf)
