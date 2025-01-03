@@ -1,15 +1,9 @@
-import tools
-import bot
+from Bot import Runbot , loger
 
-Token = "7490729977:AAFBlIJp8DeVfkusr4oMptP_bye_ZsxsrDY"
-while (True):
+while(True):
     try:
-        bot.bot(Token)
+        Runbot()
+    except KeyboardInterrupt:
+        break
     except Exception as log:
-        print(log)
-        try:
-            bot.loger(Token, log)
-        except:
-            pass
-
-
+        loger(log)

@@ -1,65 +1,65 @@
 import telebot
 import tools
 import img2pdf
-from tools import Message_Details
 
-back_button = "Back"
+finish_keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=1)
+finish_keyboard.add("Finish","Back")
 
-def bot(Token):
-    
-    bot = telebot.TeleBot(Token)
+back_keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
+back_keyboard.add("Back")
 
-    def Downloadimg(message):
+Token = "7901016275:AAGPkMv3JPYHZj7AqjnX95EqP0qAREPwQwU"
+bot = telebot.TeleBot(Token)
 
-        message = Message_Details(message)
-
-        file_id = message.file_id()
-        fileinfo = bot.get_file(file_id)
-        image = bot.download_file(fileinfo.file_path)
-        with open(file_id, "wb") as imagee:
-            imagee.write(image)
-
-        return (image)
-
-    def loger(log):
-        bot.send_message(1473554980, log)
+def Runbot():
+    tools.create_Folder("Content")
 
     #Start
     @bot.message_handler(commands=["start"])
     def start(message):
+        tools.Chech_User_folder(message)
         global keyboard
         keyboard = telebot.types.ReplyKeyboardMarkup(row_width=2,resize_keyboard=True)
 
         keyboard.add("PDF to Word","Image To PDF","Unlock PDF")
 
         bot.send_message(message.chat.id, "Hello!\nChoose:",reply_markup=keyboard)
-
+    
     # Image to pdf
     @bot.message_handler(func=lambda message : "Image To PDF" in message.text)
-    def get_image(message):
-        back_keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
-        back_keyboard.add(back_button)
-        bot.send_message(message.chat.id, "send your image:",reply_markup=back_keyboard)
-        bot.register_next_step_handler(message, imageToPdf)
-
-    def imageToPdf(message):
-        print(message.text)
-        if (message.text == back_button):
-            bot.send_message(message.chat.id, "Hello!\nChoose:",reply_markup=keyboard)
-            return
+    def ImageTopdf(message):
         
-        elif (message.content_type != "photo"):
-            bot.send_message(message.chat.id, "Pleas just Send image ‼️",reply_markup=keyboard)
+        tools.Chech_User_folder(message)
+        
+        if tools.message_content_type(message) == "photo":
+            tools.get_images(message)
+            bot.send_message(message.chat.id, f"PDF Page : {len(tools.slistdir(message=message))}", reply_markup=finish_keyboard)
+        elif tools.message_content_type(message) == "text":
+            if message.text == "Finish":
+                waite_message = bot.send_message(message.chat.id, "Please waite ⏳.")
+                tools.send_document(message, tools.Convert_imageToPdf(message))
+                bot.delete_message(message.chat.id, message_id=waite_message.message_id)
+                tools.delete_user_Content(message)
+                start(message)
+                return
+            elif message.text == "Back":
+                start(message)
+                tools.delete_user_Content(message)
+                return
+            elif message.text == "Image To PDF":
+                    if len(tools.slistdir(message=message)) == 0:
+                        bot.send_message(message.chat.id, "Send Your photos :", reply_markup=back_keyboard)
+        
+            else:
+                wrangfile_message = bot.send_message(message.chat.id, "Please Just Send <b>Photo</b>" ,parse_mode="html", reply_markup=finish_keyboard)
+                bot.delete_message(message.chat.id, message_id=message.message_id)
+        else:
+            wrangfile_message = bot.send_message(message.chat.id, "Please Just Send <b>Photo</b>" ,parse_mode="html", reply_markup=finish_keyboard)
 
-        image = Downloadimg(message)
+        #def do(message):
+       
+        bot.register_next_step_handler(message, ImageTopdf)
 
-        file = tools.image_to_pdf(image)
-
-        with open(file, "rb") as pdf:
-            bot.send_document(message.chat.id,pdf)
-
-        bot.send_message(message.chat.id, "Hello!\nChoose:",reply_markup=keyboard)
-    
     # Pdf to docx
     @bot.message_handler(func=lambda message: "PDF to Word" in message.text)
 
@@ -73,7 +73,7 @@ def bot(Token):
     # Covert PDF To docx
     def ToDocx(message):
 
-        if (message.text == back_button):
+        if (message.text == "Back"):
             bot.send_message(message.chat.id, "Hello!\nChoose:",reply_markup=keyboard)
             return
         
@@ -128,6 +128,8 @@ def bot(Token):
         
     bot.polling()
 # Loger
-def loger(Token, log):
-    bot = telebot.TeleBot(Token)
+
+def loger(log):
     bot.send_message(1473554980, f"⚠️ Bot has an Error\n📝 log:\n{log}")
+
+Runbot()
