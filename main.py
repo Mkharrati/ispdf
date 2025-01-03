@@ -1,4 +1,4 @@
-from Bot import Runbot , loger
+from bot import Runbot , loger
 
 while(True):
     try:

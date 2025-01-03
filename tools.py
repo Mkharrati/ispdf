@@ -117,5 +117,36 @@ def loger(log):
 def message_content_type(message):
     return message.content_type
 
+class Message_Details:
+    def __init__(self, message):
+        self.message = message
+    
+    def file_id(self):
+
+        message = self.message.json
+
+        if ("photo" in message):
+            return message["photo"][-1]["file_id"]
+
+        elif ("document" in message):
+            return message["document"]["file_id"]
+        
+        else:
+            print("content_types not found")
+        
+    
+    def file_path(self):
+
+        message = self.message.json
+
+        if ("photo" in message):
+            print (message["photo"])
+
+        elif ("document" in message):
+            return message["document"][0]["file_path"]
+        
+        else:
+            print("content_types not found")
+
 
         

@@ -131,5 +131,3 @@ def Runbot():
 
 def loger(log):
     bot.send_message(1473554980, f"⚠️ Bot has an Error\n📝 log:\n{log}")
-
-Runbot()
