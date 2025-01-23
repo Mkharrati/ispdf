@@ -8,7 +8,7 @@ finish_keyboard.add("Finish","Back")
 back_keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
 back_keyboard.add("Back")
 
-Token = "7901016275:AAGPkMv3JPYHZj7AqjnX95EqP0qAREPwQwU"
+Token = "7566162751:AAF6EyNbs0XSVBvb-0jhd9Bq514qMLffjhA"
 bot = telebot.TeleBot(Token)
 
 def Runbot():
@@ -28,7 +28,6 @@ def Runbot():
     # Image to pdf
     @bot.message_handler(func=lambda message : "Image To PDF" in message.text)
     def ImageTopdf(message):
-        
         tools.Chech_User_folder(message)
         
         if tools.message_content_type(message) == "photo":
@@ -62,62 +61,38 @@ def Runbot():
 
     # Pdf to docx
     @bot.message_handler(func=lambda message: "PDF to Word" in message.text)
-
-    # Get PDF from user
-    def get_pdf(message):
-        Backkeyborad = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
-        Backkeyborad.add("Back")
-        bot.send_message(message.chat.id, "Send your PDF file:",reply_markup=Backkeyborad)
-        bot.register_next_step_handler(message, ToDocx)
-    
-    # Covert PDF To docx
-    def ToDocx(message):
-
-        if (message.text == "Back"):
-            bot.send_message(message.chat.id, "Hello!\nChoose:",reply_markup=keyboard)
+    def pdf_to_Word_handler(message):
+        tools.Chech_User_folder(message)
+        bot.send_message(message.chat.id, "Please Send your pdf File : ")
+        bot.register_next_step_handler(message, pdf_to_Word)
+    def pdf_to_Word(message):
+        if  message.content_type == "text" and message.text == "back":
+            start(message)
+            tools.delete_user_Content(message)
             return
-        
-        elif (message.content_type != "document"):
-            bot.reply_to(message, "Pleas just Send PDF file‼️",reply_markup=keyboard)
-            return
-
-        file_name = message.document.file_name
-        file_format = file_name.split(".")[-1]
-        print(f"file format : {file_format}")
-        if (file_format != "pdf"):
-            bot.reply_to(message, "Pleas just Send PDF file‼️")
+        if tools.check_content_type(message,"document",".pdf"):
+            pdf_path = tools.saveFile(file=tools.DownloadFile(message),path=f"./Content/{message.chat.id}/{tools.random_name()}.pdf")
+            tools.send_document(message, tools.convert_pdf_to_docx(pdf_path))
+        else:
+            bot.send_message(message.chat.id, "Please send only pdf file.")
+            tools.delete_user_Content(message)
+            start(message)
+            tools.delete_user_Content(message)
             return
 
-        file_id = message.document.file_id
-        file_DLinfo = bot.get_file(file_id)
-
-        print(file_DLinfo)
-
-        file = bot.download_file(file_DLinfo.file_path)
-
-        file_name = file_name.split('.')[0]
-
-        with open(file_name, "wb") as Downloaded_file:
-            Downloaded_file.write(file)
-
-        tools.tools(file_name,f"{file_name}.docx")
-        
-        with open(f"{file_name}.docx", "rb") as DocxFile:
-            bot.send_document(message.chat.id, DocxFile)
-            bot.send_message(message.chat.id, "Hello!\nChoose:",reply_markup=keyboard)
 
     # Unlock PDF
     @bot.message_handler(func=lambda message: "Unlock PDF" in message.text)
     def send(message):
         back_keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
-        back_keyboard.add(back_button)
+        #back_keyboard.add(back_button)
         bot.send_message(message.chat.id, "Send Your PDF File To Unlock it :")
         bot.register_next_step_handler(message, Unlock)
     
     def Unlock(message):
         file_name = f"Unlock_{message.document.file_name}"
        
-        file = Downloadimg(message)
+        #file = Downloadimg(message)
         with open(file_name, "wb") as Newfile:
             Newfile.write(file)
         with open(file_name, "rb") as SendFile:

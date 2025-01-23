@@ -3,10 +3,11 @@ import telebot
 import random
 import pikepdf
 import os
+import pdf2docx
 from shutil import rmtree
 from pdf2docx import parse
 
-Token = "7901016275:AAGPkMv3JPYHZj7AqjnX95EqP0qAREPwQwU"
+Token = "7566162751:AAF6EyNbs0XSVBvb-0jhd9Bq514qMLffjhA"
 
 bot = telebot.TeleBot(Token)
 
@@ -147,6 +148,25 @@ class Message_Details:
         
         else:
             print("content_types not found")
+def file_extension(file_name = "", extention = ""): # file_name or file_path
+    if (file_name.endswith(extention)):
+        return True
+    else:
+        return False
 
+def check_content_type(message, content_type = "", extension = ""):
+    if message.content_type == content_type:
+        if file_extension == "":
+            return True
+        elif (file_extension(message.document.file_name, extension) == True):
+            return True
+
+def convert_pdf_to_docx(pdf_file_path = ""):
+    docx_path = pdf_file_path.replace(".pdf",".docx")
+    print(docx_path)
+    parse(pdf_file_path, docx_path)
+    os.remove(pdf_file_path)
+    return docx_path
+    
 
         
