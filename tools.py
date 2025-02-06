@@ -6,8 +6,8 @@ import os
 import pdf2docx
 from shutil import rmtree
 from pdf2docx import parse
-
-Token = "7566162751:AAF6EyNbs0XSVBvb-0jhd9Bq514qMLffjhA"
+import aspose.words as aw
+Token = "7566162751:AAF6p67RpMqhDfbBk3NaUeQ9fuN42vVXPbE"
 
 bot = telebot.TeleBot(Token)
 
@@ -50,7 +50,7 @@ def slistdir(path=None, message=None):
 
 def Unlock(pdf):
     file = pikepdf.open(pdf)
-    file.save("Unlocked_"+pdf)
+    file.save(f"{pdf}_Unlocked")
     return file
 
 def Downloadimg(message):
@@ -156,17 +156,42 @@ def file_extension(file_name = "", extention = ""): # file_name or file_path
 
 def check_content_type(message, content_type = "", extension = ""):
     if message.content_type == content_type:
-        if file_extension == "":
+        if extension == "":
             return True
         elif (file_extension(message.document.file_name, extension) == True):
             return True
+    return False
 
-def convert_pdf_to_docx(pdf_file_path = ""):
-    docx_path = pdf_file_path.replace(".pdf",".docx")
-    print(docx_path)
-    parse(pdf_file_path, docx_path)
+def convert_pdf_to_docx(message ,pdf_file_path = ""):
+    document = aw.Document(pdf_file_path)
+    docx_path = f"./Content/{message.chat.id}/{random_name()}.docx"
+    document.save(docx_path)
     os.remove(pdf_file_path)
     return docx_path
+
+def is_pdf_file(pdf_path):
+    if file_extension(pdf_path, extention=".pdf"):
+        try:
+            pikepdf.open(pdf_path)
+            return True
+        except:
+            return False
+    else:
+        return False
+def check_file_size(message, size):
+    if message.content_type == "document":
+        if message.document.file_size <= size:
+            return True
+        else:
+            return False
+    elif message.content_type == "photo":
+        if message.photo["file_size"] <= size:
+            return True
+        else:
+            return False
+        
+        
     
+
 
         

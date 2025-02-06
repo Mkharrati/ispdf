@@ -8,15 +8,15 @@ finish_keyboard.add("Finish","Back")
 back_keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
 back_keyboard.add("Back")
 
-Token = "7566162751:AAF6EyNbs0XSVBvb-0jhd9Bq514qMLffjhA"
+Token = "7566162751:AAF6p67RpMqhDfbBk3NaUeQ9fuN42vVXPbE"
 bot = telebot.TeleBot(Token)
-
 def Runbot():
     tools.create_Folder("Content")
 
     #Start
     @bot.message_handler(commands=["start"])
     def start(message):
+        tools.delete_user_Content(message)
         tools.Chech_User_folder(message)
         global keyboard
         keyboard = telebot.types.ReplyKeyboardMarkup(row_width=2,resize_keyboard=True)
@@ -29,15 +29,14 @@ def Runbot():
     @bot.message_handler(func=lambda message : "Image To PDF" in message.text)
     def ImageTopdf(message):
         tools.Chech_User_folder(message)
-        
-        if tools.message_content_type(message) == "photo":
+        if tools.message_content_type(message) == "photo":            
+            # check image size
+            #
             tools.get_images(message)
             bot.send_message(message.chat.id, f"PDF Page : {len(tools.slistdir(message=message))}", reply_markup=finish_keyboard)
         elif tools.message_content_type(message) == "text":
             if message.text == "Finish":
-                waite_message = bot.send_message(message.chat.id, "Please waite ⏳.")
                 tools.send_document(message, tools.Convert_imageToPdf(message))
-                bot.delete_message(message.chat.id, message_id=waite_message.message_id)
                 tools.delete_user_Content(message)
                 start(message)
                 return
@@ -46,14 +45,13 @@ def Runbot():
                 tools.delete_user_Content(message)
                 return
             elif message.text == "Image To PDF":
-                    if len(tools.slistdir(message=message)) == 0:
-                        bot.send_message(message.chat.id, "Send Your photos :", reply_markup=back_keyboard)
+                if len(tools.slistdir(message=message)) == 0:
+                    bot.send_message(message.chat.id, "Send Your photos :", reply_markup=back_keyboard)
         
             else:
-                wrangfile_message = bot.send_message(message.chat.id, "Please Just Send <b>Photo</b>" ,parse_mode="html", reply_markup=finish_keyboard)
-                bot.delete_message(message.chat.id, message_id=message.message_id)
+                bot.send_message(message.chat.id, "Please Just Send <b>Photo</b>" ,parse_mode="html", reply_markup=finish_keyboard)
         else:
-            wrangfile_message = bot.send_message(message.chat.id, "Please Just Send <b>Photo</b>" ,parse_mode="html", reply_markup=finish_keyboard)
+            bot.send_message(message.chat.id, "Please Just Send <b>Photo</b>" ,parse_mode="html", reply_markup=finish_keyboard)
 
         #def do(message):
        
@@ -61,42 +59,64 @@ def Runbot():
 
     # Pdf to docx
     @bot.message_handler(func=lambda message: "PDF to Word" in message.text)
-    def pdf_to_Word_handler(message):
-        tools.Chech_User_folder(message)
-        bot.send_message(message.chat.id, "Please Send your pdf File : ")
-        bot.register_next_step_handler(message, pdf_to_Word)
-    def pdf_to_Word(message):
-        if  message.content_type == "text" and message.text == "back":
+    def get_docx_file(message):
+        bot.send_message(message.chat.id, "Please send your PDF file : ", reply_markup=back_keyboard)
+        bot.register_next_step_handler(message, send_docx_file)
+
+    def send_docx_file(message):
+        print(tools.check_content_type(message, "document"))
+        if tools.check_content_type(message, "text") and message.text == "Back":
             start(message)
-            tools.delete_user_Content(message)
             return
-        if tools.check_content_type(message,"document",".pdf"):
-            pdf_path = tools.saveFile(file=tools.DownloadFile(message),path=f"./Content/{message.chat.id}/{tools.random_name()}.pdf")
-            tools.send_document(message, tools.convert_pdf_to_docx(pdf_path))
-        else:
-            bot.send_message(message.chat.id, "Please send only pdf file.")
-            tools.delete_user_Content(message)
+        elif tools.check_content_type(message, "document") == False:
+            bot.send_message(message.chat.id, "Plese send only pdf file ❗️")
             start(message)
-            tools.delete_user_Content(message)
             return
+        if tools.check_file_size(message, size=10000000) == False:
+            bot.send_message(message.chat.id, "Please send a file under 10 MB ❗️")
+            start(message)
+            return
+        pdf_file = tools.DownloadFile(message)
+        pdf_file = tools.saveFile(pdf_file, f"./Content/{message.chat.id}/{tools.random_name()}.pdf")
+
+        # check pdf file that is really a pdf file or no.
+        if tools.is_pdf_file(pdf_file) == False:
+            bot.send_message(message.chat.id, "Plese send only pdf file ❗️")
+            start(message)
+            return
+
+        docx_file = tools.convert_pdf_to_docx(message, pdf_file)
+        tools.send_document(message, docx_file)
+        tools.delete_user_Content(message)
+        start(message)
+
 
 
     # Unlock PDF
     @bot.message_handler(func=lambda message: "Unlock PDF" in message.text)
-    def send(message):
-        back_keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
-        #back_keyboard.add(back_button)
-        bot.send_message(message.chat.id, "Send Your PDF File To Unlock it :")
-        bot.register_next_step_handler(message, Unlock)
-    
-    def Unlock(message):
-        file_name = f"Unlock_{message.document.file_name}"
-       
-        #file = Downloadimg(message)
-        with open(file_name, "wb") as Newfile:
-            Newfile.write(file)
-        with open(file_name, "rb") as SendFile:
-            bot.send_document(message.chat.id, SendFile)
+    def document_handler(message):
+        tools.Chech_User_folder(message)
+        bot.send_message(message.chat.id, "Please send your pdf file : ", reply_markup=back_keyboard)
+        bot.register_next_step_handler(message, UnlockPdf_and_send)
+    def UnlockPdf_and_send(message):
+        if tools.check_content_type(message, "document") and tools.check_file_size(message, size=10000000) == False:
+            print(103)
+            bot.send_message(message.chat.id, "Please send a file under 10 MB ❗️")
+            start(message)
+            return
+        elif tools.check_content_type(message, "text") and message.text == "Back":
+            start(message)
+            return
+        elif tools.check_content_type(message, "document") == False:
+            bot.send_message(message.chat.id, "Please only send pdf file ❗️")
+            start(message)
+            return
+        pdf_path = tools.saveFile(tools.DownloadFile(message),path=f"./Content/{message.chat.id}/{tools.random_name()}.pdf")
+        tools.Unlock(pdf_path)
+        tools.send_document(message, pdf_path)
+        tools.delete_user_Content(message)
+        start(message)
+        return
 
         
 
@@ -106,3 +126,4 @@ def Runbot():
 
 def loger(log):
     bot.send_message(1473554980, f"⚠️ Bot has an Error\n📝 log:\n{log}")
+
