@@ -11,7 +11,7 @@ finish_keyboard.add("Finish","Back")
 back_keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
 back_keyboard.add("Back")
 
-Token = "7566162751:AAF6p67RpMqhDfbBk3NaUeQ9fuN42vVXPbE"
+Token = ""
 bot = telebot.TeleBot(Token)
 def Runbot():
     tools.create_Folder("Content")

@@ -9,7 +9,7 @@ from pdf2docx import parse
 import aspose.words as aw
 import docx2pdf
 import docx
-Token = "7566162751:AAF6p67RpMqhDfbBk3NaUeQ9fuN42vVXPbE"
+Token = ""
 
 bot = telebot.TeleBot(Token)
 
