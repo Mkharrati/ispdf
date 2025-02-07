@@ -99,13 +99,13 @@ def Convert_imageToPdf(message):
     
 def imageToPdf(message):
     print(message.text) # For Debug
-    if (message.text == back_button):
+    if (message.text == "Back"):
     
         return "back"
     
     
     elif (message.content_type != "photo"):
-        bot.send_message(message.chat.id, "Pleas just Send image ‼️",reply_markup=keyboard)
+        bot.send_message(message.chat.id, "Pleas just Send image ‼️")
 
 def get_images(message):
     
