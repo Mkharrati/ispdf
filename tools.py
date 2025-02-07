@@ -7,6 +7,8 @@ import pdf2docx
 from shutil import rmtree
 from pdf2docx import parse
 import aspose.words as aw
+import docx2pdf
+import docx
 Token = "7566162751:AAF6p67RpMqhDfbBk3NaUeQ9fuN42vVXPbE"
 
 bot = telebot.TeleBot(Token)
@@ -178,6 +180,15 @@ def is_pdf_file(pdf_path):
             return False
     else:
         return False
+    
+def is_docx_file(docx_path):
+    try:
+        docx.Document(docx_path)
+        return True
+    except:
+        return False
+
+
 def check_file_size(message, size):
     if message.content_type == "document":
         if message.document.file_size <= size:
@@ -189,9 +200,17 @@ def check_file_size(message, size):
             return True
         else:
             return False
-        
-        
-    
 
+def convert_docx_to_pdf(message, docx_path):
+    create_Folder(f"Content/{message.chat.id}/docxTopdf")
+    pdf_path = f"./{random_name()}.pdf"
+    print(f"pdf_path = {pdf_path}")
+    docx2pdf.convert(docx_path, pdf_path)
+    print("Word to PDF finished")
+    return pdf_path
 
-        
+def delete_file(file_path):
+    try:
+        os.remove(file_path)
+    except:
+        print(f"Error in deleting file : {file_path}")

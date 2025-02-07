@@ -2,6 +2,9 @@ import telebot
 import tools
 import img2pdf
 
+keyboard = telebot.types.ReplyKeyboardMarkup(row_width=2,resize_keyboard=True)
+keyboard.add("PDF to Word","Image To PDF","Word to PDF","Unlock PDF")
+
 finish_keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=1)
 finish_keyboard.add("Finish","Back")
 
@@ -19,9 +22,6 @@ def Runbot():
         tools.delete_user_Content(message)
         tools.Chech_User_folder(message)
         global keyboard
-        keyboard = telebot.types.ReplyKeyboardMarkup(row_width=2,resize_keyboard=True)
-
-        keyboard.add("PDF to Word","Image To PDF","Unlock PDF")
 
         bot.send_message(message.chat.id, "Hello!\nChoose:",reply_markup=keyboard)
     
@@ -100,7 +100,6 @@ def Runbot():
         bot.register_next_step_handler(message, UnlockPdf_and_send)
     def UnlockPdf_and_send(message):
         if tools.check_content_type(message, "document") and tools.check_file_size(message, size=10000000) == False:
-            print(103)
             bot.send_message(message.chat.id, "Please send a file under 10 MB ❗️")
             start(message)
             return
@@ -117,6 +116,38 @@ def Runbot():
         tools.delete_user_Content(message)
         start(message)
         return
+
+    # Docx to PDF
+    @bot.message_handler(func=lambda message: "Word to PDF" in message.text)
+    def get_docx(message):
+        bot.send_message(message.chat.id, "Please send your Word file :", reply_markup=back_keyboard)
+        bot.register_next_step_handler(message, send_pdf)
+    def send_pdf(message):
+        if tools.check_content_type(message, "document") and tools.check_file_size(message, size=10000000) == False:
+            bot.send_message(message.chat.id, "Please send a file under 10 MB ❗️")
+            start(message)
+            return
+        elif tools.check_content_type(message, "text") and message.text == "Back":
+            start(message)
+            return
+        # extension=".docx"
+        elif tools.check_content_type(message, "document", extension=".docx") == False:
+            bot.send_message(message.chat.id, "Please only send docx file ❗️")
+            start(message)
+            return
+        docx_file_path = tools.DownloadFile(message)
+        docx_file_path = tools.saveFile(docx_file_path, f"./Content/{message.chat.id}/{tools.random_name()}.docx")
+
+        # check docx file that is really a docx file or no.
+        if tools.is_docx_file(docx_file_path) == False:
+            bot.send_message(message.chat.id, "Please only send docx file ❗️")
+            start(message)
+            return
+        
+        pdf_path = tools.convert_docx_to_pdf(message ,docx_file_path)
+        tools.send_document(message, pdf_path)
+        tools.delete_file(pdf_path)
+        start(message)
 
         
 
