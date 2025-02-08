@@ -3,7 +3,7 @@ import tools
 import img2pdf
 
 keyboard = telebot.types.ReplyKeyboardMarkup(row_width=2,resize_keyboard=True)
-keyboard.add("PDF to Word","Image To PDF","Word to PDF","Unlock PDF")
+keyboard.add("PDF to Word", "Image To PDF", "Word to PDF", "Unlock PDF", "Merge PDF")
 
 finish_keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=1)
 finish_keyboard.add("Finish","Back")
@@ -11,7 +11,7 @@ finish_keyboard.add("Finish","Back")
 back_keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
 back_keyboard.add("Back")
 
-Token = ""
+Token = "7901016275:AAGPkMv3JPYHZj7AqjnX95EqP0qAREPwQwU"
 bot = telebot.TeleBot(Token)
 def Runbot():
     tools.create_Folder("Content")
@@ -33,7 +33,7 @@ def Runbot():
             # check image size
             #
             tools.get_images(message)
-            bot.send_message(message.chat.id, f"PDF Page : {len(tools.slistdir(message=message))}", reply_markup=finish_keyboard)
+            bot.send_message(message.chat.id, f"PDF Page : {len(tools.list_file_by_time_added(message=message))}", reply_markup=finish_keyboard)
         elif tools.message_content_type(message) == "text":
             if message.text == "Finish":
                 tools.send_document(message, tools.Convert_imageToPdf(message))
@@ -45,7 +45,7 @@ def Runbot():
                 tools.delete_user_Content(message)
                 return
             elif message.text == "Image To PDF":
-                if len(tools.slistdir(message=message)) == 0:
+                if len(tools.list_file_by_time_added(message=message)) == 0:
                     bot.send_message(message.chat.id, "Send Your photos :", reply_markup=back_keyboard)
         
             else:
@@ -59,7 +59,7 @@ def Runbot():
 
     # Pdf to docx
     @bot.message_handler(func=lambda message: "PDF to Word" in message.text)
-    def get_docx_file(message):
+    def get_pdf(message):
         bot.send_message(message.chat.id, "Please send your PDF file : ", reply_markup=back_keyboard)
         bot.register_next_step_handler(message, send_docx_file)
 
@@ -94,7 +94,7 @@ def Runbot():
 
     # Unlock PDF
     @bot.message_handler(func=lambda message: "Unlock PDF" in message.text)
-    def document_handler(message):
+    def get_pdf(message):
         tools.Chech_User_folder(message)
         bot.send_message(message.chat.id, "Please send your pdf file : ", reply_markup=back_keyboard)
         bot.register_next_step_handler(message, UnlockPdf_and_send)
@@ -148,9 +148,45 @@ def Runbot():
         tools.send_document(message, pdf_path)
         tools.delete_file(pdf_path)
         start(message)
+    
+    # Merge PDF
+    @bot.message_handler(func=lambda message: "Merge PDF" in message.text)
+    def get_pdf(message):
+        print(message.id)
+        if tools.check_content_type(message, "text"):
+            if message.text == "Back":
+                start(message)
+                return
+            elif message.text == "Finish":
+                if len(tools.list_file_by_time_added(message=message)) > 0 :
+                    merged_pdf = tools.merge_pdf(message, tools.list_file_by_time_added(message=message))
+                    tools.send_document(message, merged_pdf)
+                    start(message)
+                    return
+            elif message.text == "Merge PDF":
+                global send_your_pdf_file_message
+                send_your_pdf_file_message = bot.send_message(message.chat.id, "Please send your pdf file :", reply_markup=back_keyboard)
+                bot.register_next_step_handler(message, get_pdf)
+            else:
+                bot.send_message(message.chat.id, "Please only send pdf file ❗️")
+                start(message)
+                return
+        elif tools.check_content_type(message, "document", ".pdf"):
+            pdf = tools.DownloadFile(message)
+            pdf = tools.saveFile(pdf, path=f"./Content/{message.chat.id}/{tools.random_name()}.pdf")
+            if tools.is_pdf_file(pdf) == False:
+                bot.send_message(message.chat.id, "Please only send pdf file ❗️")
+                start(message)
+                return
+            else:
+                bot.send_message(message.chat.id, f"recived!\ncount of pdfs is : {len(tools.list_file_by_time_added(message=message))}\nSend next :",reply_markup=finish_keyboard)
+                bot.register_next_step_handler(message, get_pdf)
+        else:
+            bot.send_message(message.chat.id, "Please only send pdf file ❗️")
+            start(message)
+            return   
 
-        
-
+            
         
     bot.polling()
 # Loger

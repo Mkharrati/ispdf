@@ -9,7 +9,9 @@ from pdf2docx import parse
 import aspose.words as aw
 import docx2pdf
 import docx
-Token = ""
+from pypdf import PdfWriter
+
+Token = "7901016275:AAGPkMv3JPYHZj7AqjnX95EqP0qAREPwQwU"
 
 bot = telebot.TeleBot(Token)
 
@@ -28,14 +30,14 @@ def create_Folder(name, path="./"):
         os.mkdir(f"{path}/{name}")
 
 # list file sorted by Time added
-def slistdir(path=None, message=None):
+def list_file_by_time_added(path=None, message=None):
     if message == None:
         directory_path = path
     else:
         directory_path = f"./Content/{message.chat.id}"
+    print(f"directory_path = {directory_path}")
     result = []
     
-
     # Get all files and directories
     entries = os.listdir(directory_path)
 
@@ -47,7 +49,7 @@ def slistdir(path=None, message=None):
 
     # Print sorted entries
     for entry in sorted_entries:
-        result.append(f"./{path}/{entry}")
+        result.append(f"{directory_path}/{entry}")
     return result
 
 def Unlock(pdf):
@@ -90,7 +92,7 @@ def Convert_imageToPdf(message):
     User_path = f"./Content/{message.chat.id}"
     pdf_path = f"{User_path}.pdf"
 
-    Picturs = slistdir(User_path)
+    Picturs = list_file_by_time_added(User_path)
 
     with open(pdf_path, "wb") as pdf:
         pdf.write(img2pdf.convert(Picturs))
@@ -214,3 +216,15 @@ def delete_file(file_path):
         os.remove(file_path)
     except:
         print(f"Error in deleting file : {file_path}")
+
+def merge_pdf(message ,pdfs):
+    print(pdfs)
+    merger = PdfWriter()
+    for pdf in pdfs:
+        merger.append(pdf)
+    merged_pdf_path = f"./Content/{message.chat.id}/{random_name()}.pdf"
+    merger.write(merged_pdf_path)
+    merger.close()
+    return merged_pdf_path
+
+
