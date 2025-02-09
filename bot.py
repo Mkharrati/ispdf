@@ -1,6 +1,12 @@
 import telebot
 import tools
 import img2pdf
+import os
+from dotenv import load_dotenv
+
+# loading the env file
+load_dotenv()
+
 
 keyboard = telebot.types.ReplyKeyboardMarkup(row_width=2,resize_keyboard=True)
 keyboard.add("PDF to Word", "Image To PDF", "Word to PDF", "Unlock PDF", "Merge PDF")
@@ -11,8 +17,11 @@ finish_keyboard.add("Finish","Back")
 back_keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
 back_keyboard.add("Back")
 
-Token = "7901016275:AAGPkMv3JPYHZj7AqjnX95EqP0qAREPwQwU"
-bot = telebot.TeleBot(Token)
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+
+if not TELEGRAM_BOT_TOKEN:
+    raise ValueError("TELEGRAM_BOT_TOKEN is missing. Please add your token in your environment file. Check the `.env` file.")
+bot = telebot.TeleBot(TELEGRAM_BOT_TOKEN)
 def Runbot():
     tools.create_Folder("Content")
 
