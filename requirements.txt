@@ -1,0 +1,8 @@
+telebot
+pypdf
+pikepdf
+img2pdf
+pdf2docx
+python-docx
+docx2pdf
+aspose-words
