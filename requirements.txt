@@ -6,3 +6,4 @@ pdf2docx
 python-docx
 docx2pdf
 aspose-words
+python-dotenv
