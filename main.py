@@ -19,4 +19,6 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    """ infinity loop for cover possible connection problems. """
+    while(True):
+        main()
