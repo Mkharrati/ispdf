@@ -1,4 +1,7 @@
 import telebot
+import file_utils
+import converters
+import os
 
 def get_file_id(message):
     """
@@ -75,3 +78,22 @@ class MessageDetails:
 
     def file_id(self):
         return get_file_id(self.message)
+    
+def check_is_pdf_by_message(message, bot) -> bool:
+    """
+    check the message content that is a pdf file or no.
+    """
+    if message.content_type != "document":
+        return False
+    pdf = download_file(bot, message)
+    pdf_path = file_utils.save_file(pdf, f"./Content/{message.chat.id}/{file_utils.random_name()}.pdf")
+    if converters.is_pdf_file(pdf_path):
+        os.remove(pdf_path)
+        return True
+    else:
+        os.remove(pdf_path)
+        return False
+    
+def send_photo_by_list(bot, chat_id, photos = list()):
+    for file in photos:
+        send_document(bot, chat_id, file)

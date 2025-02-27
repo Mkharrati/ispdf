@@ -6,6 +6,7 @@ import docx2pdf
 import docx
 from pypdf import PdfWriter
 import file_utils
+import pdf2image
 
 def convert_images_to_pdf(user_folder, output_pdf):
     """
@@ -74,3 +75,16 @@ def is_docx_file(docx_path):
         return True
     except Exception:
         return False
+
+def convert_pdf_to_image(user_folder, pdf_path):
+    """
+    Convert pdf pages to image and save in user_folder path.
+    """
+    pages = pdf2image.convert_from_path(pdf_path)
+    for page in pages:
+        random_name = file_utils.random_name()
+        image_path = f"{user_folder}/{random_name}.jpg"
+        page.save(image_path, "JPEG")
+    os.remove(pdf_path)
+    return file_utils.list_files_by_time(user_folder)
+

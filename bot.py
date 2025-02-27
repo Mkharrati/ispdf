@@ -2,6 +2,7 @@ import os
 import telebot
 from telebot import types
 from dotenv import load_dotenv
+import pdf2image
 
 # Import our new helper modules
 import file_utils
@@ -25,7 +26,7 @@ class PDFConverterBot:
     def init_keyboards(self):
         """Initialize custom keyboards used by the bot."""
         self.main_keyboard = types.ReplyKeyboardMarkup(row_width=2, resize_keyboard=True)
-        self.main_keyboard.add("PDF to Word", "Image To PDF", "Word to PDF", "Unlock PDF", "Merge PDF")
+        self.main_keyboard.add("PDF to Word", "Image To PDF", "Word to PDF", "Unlock PDF", "Merge PDF", "PDF to image")
         
         self.finish_keyboard = types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
         self.finish_keyboard.add("Finish", "Back")
@@ -41,6 +42,7 @@ class PDFConverterBot:
         self.bot.message_handler(func=lambda m: "Unlock PDF" in m.text)(self.handle_unlock_pdf)
         self.bot.message_handler(func=lambda m: "Word to PDF" in m.text)(self.handle_word_to_pdf)
         self.bot.message_handler(func=lambda m: "Merge PDF" in m.text)(self.handle_merge_pdf)
+        self.bot.message_handler(func=lambda m: "PDF to image" in m.text)(self.handle_pdf_to_image)
     
     def handle_start(self, message):
         """Handler for /start command."""
@@ -225,7 +227,30 @@ class PDFConverterBot:
             self.bot.send_message(message.chat.id, "Please send only a PDF file ❗️")
             self.handle_start(message)
             return
-    
+    def handle_pdf_to_image(self, message):
+        """Handle convert pdf pages to JPEG file."""
+        self.bot.send_message(message.chat.id ,"Please send your PDF file for Conversion to image:", reply_markup=self.back_keyboard)
+        self.bot.register_next_step_handler(message, self.process_pdf_to_image)
+
+    def process_pdf_to_image(self, message):
+        if message.content_type == "text":
+            if message.text == "Back":
+                self.handle_start(message)
+                return
+            else:
+                self.bot.send_message(message.chat.id ,"Please only send pdf file.")
+        if tg_helpers.check_is_pdf_by_message(message, self.bot) == False:
+            self.bot.send_message(message.chat.id ,"Please only send pdf file.")
+            self.handle_start()
+            return
+        pdf = tg_helpers.download_file(self.bot, message)
+        pdf_path = file_utils.save_file(pdf, f"./Content/{message.chat.id}/{file_utils.random_name()}")
+        photos_path = converters.convert_pdf_to_image(f"./Content/{message.chat.id}", pdf_path)
+        tg_helpers.send_photo_by_list(self.bot, message.chat.id ,photos_path)
+        self.handle_start(message)
+        return
+
+
     def run(self):
         """Start polling for messages."""
         self.bot.polling()
