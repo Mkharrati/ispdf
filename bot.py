@@ -2,7 +2,6 @@ import os
 import telebot
 from telebot import types
 from dotenv import load_dotenv
-import pdf2image
 
 # Import our new helper modules
 import file_utils
@@ -246,7 +245,7 @@ class PDFConverterBot:
         pdf = tg_helpers.download_file(self.bot, message)
         pdf_path = file_utils.save_file(pdf, f"./Content/{message.chat.id}/{file_utils.random_name()}")
         photos_path = converters.convert_pdf_to_image(f"./Content/{message.chat.id}", pdf_path)
-        tg_helpers.send_photo_by_list(self.bot, message.chat.id ,photos_path)
+        tg_helpers.send_document_by_list(self.bot, message.chat.id ,photos_path)
         self.handle_start(message)
         return
 

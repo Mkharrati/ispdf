@@ -94,6 +94,6 @@ def check_is_pdf_by_message(message, bot) -> bool:
         os.remove(pdf_path)
         return False
     
-def send_photo_by_list(bot, chat_id, photos = list()):
+def send_document_by_list(bot, chat_id, photos = list()):
     for file in photos:
         send_document(bot, chat_id, file)
