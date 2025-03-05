@@ -58,7 +58,7 @@ class PDFConverterBot:
             # Download and save the image
             tg_helpers.get_image(self.bot, message, user_folder, file_utils.random_name)
             count = len(file_utils.list_files_by_time(user_folder))
-            self.bot.send_message(message.chat.id, f"PDF Page: {count}", reply_markup=self.finish_keyboard)
+            self.bot.send_message(message.chat.id, f"PDF Pages : {count} \n Send Next :", reply_markup=self.finish_keyboard)
         elif content_type == "text":
             if message.text == "Finish":
                 user_folder = file_utils.check_user_folder(message)

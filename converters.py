@@ -12,9 +12,11 @@ def convert_images_to_pdf(user_folder, output_pdf):
     """
     Convert all images in a folder to a PDF.
     """
+    A4_size = (img2pdf.mm_to_pt(210),img2pdf.mm_to_pt(297))
+    layout_fun = img2pdf.get_layout_fun(A4_size)
     image_files = file_utils.list_files_by_time(user_folder)
     with open(output_pdf, "wb") as f:
-        f.write(img2pdf.convert(image_files))
+        f.write(img2pdf.convert(image_files, layout_fun=layout_fun))
     return output_pdf
 
 def convert_pdf_to_docx(pdf_path, output_docx):
