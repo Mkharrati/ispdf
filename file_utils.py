@@ -55,3 +55,28 @@ def delete_user_content(message, base_path="./Content"):
     user_folder = os.path.join(base_path, str(message.chat.id))
     if os.path.exists(user_folder):
         rmtree(user_folder)
+
+def file_extension(file_path):
+    """Return file extension"""
+    extension = file_path.split(".")[-1]
+    return extension
+
+
+def check_name_has_extension(name):
+    """check that name has extension"""
+    name_extension = name.split(".")[-1]
+    return name not in name_extension
+
+def rename_file(file_path, new_path):
+    """Rename a file with extension recognition capability"""
+    file_name = file_path.split("\\")[-1] # last file name
+    extension = file_path.split(".")[-1] # last file extension
+    
+    # if new_path had extension mean user entered a name with optional extension else add default extension to end of new_path:
+    if check_name_has_extension(new_path):
+        new_path = file_path.replace(file_name, f"{new_path}")
+    else:
+        new_path = file_path.replace(file_name, f"{new_path}.{extension}")
+        
+    os.rename(file_path, new_path)
+    return new_path

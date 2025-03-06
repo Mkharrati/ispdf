@@ -44,8 +44,9 @@ def check_content_type(message, expected_type, extension=""):
 
 def check_file_size(message, size_limit):
     """
-    Check if the file in the message is under size_limit (in bytes).
+    Check if the file in the message is under size_limit (in Megabytes).
     """
+    size_limit = size_limit * 1000000 # Megabyte to byte
     if message.content_type == "document":
         return message.document.file_size <= size_limit
     elif message.content_type == "photo":
@@ -53,9 +54,9 @@ def check_file_size(message, size_limit):
         return message.photo[-1].file_size <= size_limit
     return False
 
-def get_message_content_type(message):
-    """Return the content type of the message."""
-    return message.content_type
+def check_message_content_type(message, content_type):
+    """check the content type of the message with 'content_type' parameter"""
+    return message.content_type in content_type
 
 def get_image(bot, message, user_folder, random_name_func):
     """

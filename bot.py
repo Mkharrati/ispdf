@@ -25,7 +25,7 @@ class PDFConverterBot:
     def init_keyboards(self):
         """Initialize custom keyboards used by the bot."""
         self.main_keyboard = types.ReplyKeyboardMarkup(row_width=2, resize_keyboard=True)
-        self.main_keyboard.add("PDF to Word", "Image To PDF", "Word to PDF", "Unlock PDF", "Merge PDF", "PDF to image")
+        self.main_keyboard.add("PDF to Word", "Image To PDF", "Word to PDF", "Unlock PDF", "Merge PDF", "PDF to image", "Rename File")
         
         self.finish_keyboard = types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
         self.finish_keyboard.add("Finish", "Back")
@@ -42,6 +42,7 @@ class PDFConverterBot:
         self.bot.message_handler(func=lambda m: "Word to PDF" in m.text)(self.handle_word_to_pdf)
         self.bot.message_handler(func=lambda m: "Merge PDF" in m.text)(self.handle_merge_pdf)
         self.bot.message_handler(func=lambda m: "PDF to image" in m.text)(self.handle_pdf_to_image)
+        self.bot.message_handler(func=lambda m: "Rename File" in m.text)(self.handle_rename_file)
     
     def handle_start(self, message):
         """Handler for /start command."""
@@ -98,8 +99,8 @@ class PDFConverterBot:
             self.handle_start(message)
             return
         
-        if not tg_helpers.check_file_size(message, 10000000):
-            self.bot.send_message(message.chat.id, "Please send a file under 10 MB ❗️")
+        if not tg_helpers.check_file_size(message, 20):
+            self.bot.send_message(message.chat.id, "Please send a file under 20 MB ❗️")
             self.handle_start(message)
             return
         
@@ -135,8 +136,8 @@ class PDFConverterBot:
             self.handle_start(message)
             return
         
-        if not tg_helpers.check_file_size(message, 10000000):
-            self.bot.send_message(message.chat.id, "Please send a file under 10 MB ❗️")
+        if not tg_helpers.check_file_size(message, 20):
+            self.bot.send_message(message.chat.id, "Please send a file under 20 MB ❗️")
             self.handle_start(message)
             return
         
@@ -166,8 +167,8 @@ class PDFConverterBot:
             self.handle_start(message)
             return
         
-        if not tg_helpers.check_file_size(message, 10000000):
-            self.bot.send_message(message.chat.id, "Please send a file under 10 MB ❗️")
+        if not tg_helpers.check_file_size(message, 20):
+            self.bot.send_message(message.chat.id, "Please send a file under 20 MB ❗️")
             self.handle_start(message)
             return
         
@@ -242,13 +243,53 @@ class PDFConverterBot:
             self.bot.send_message(message.chat.id ,"Please only send pdf file.")
             self.handle_start()
             return
+        user_folder = file_utils.check_user_folder(message)
         pdf = tg_helpers.download_file(self.bot, message)
-        pdf_path = file_utils.save_file(pdf, f"./Content/{message.chat.id}/{file_utils.random_name()}")
+        pdf_path = file_utils.save_file(pdf, f"{user_folder}/{file_utils.random_name()}")
         photos_path = converters.convert_pdf_to_image(f"./Content/{message.chat.id}", pdf_path)
         tg_helpers.send_document_by_list(self.bot, message.chat.id ,photos_path)
         self.handle_start(message)
         return
+    
+    def handle_rename_file(self, message):
+        """Handle rename file"""
+        self.bot.send_message(message.chat.id, "Please send your file for rename:")
+        self.bot.register_next_step_handler(message, self.process_rename_file_get_file)
 
+    def process_rename_file_get_file(self, message):
+        """process to get file from user"""
+        if not tg_helpers.check_message_content_type(message, ["document","photo"]):
+            self.bot.send_message(message.chat.id, "Content type is invalid ❗️")
+            self.handle_start(message)
+            return
+        elif not tg_helpers.check_file_size(message, 40):
+            self.bot.send_message(message.chat.id, "Please send a file under 40 MB ❗️")
+            self.handle_start(message)
+            return
+        user_folder = file_utils.check_user_folder(message)
+        # documents has file name but other type like 'photo' no.
+        if tg_helpers.check_message_content_type(message, "document"):
+            file_name = message.document.file_name
+        elif tg_helpers.check_message_content_type(message, "photo"):
+            file_name = f"{file_utils.random_name()}.jpg"
+        file_extension = file_utils.file_extension(file_name)
+        file = tg_helpers.download_file(self.bot, message)
+        output_path = os.path.join(user_folder, f"{file_utils.random_name()}.{file_extension}")
+        file_utils.save_file(file, output_path)
+        self.bot.send_message(message.chat.id, "Enter your desired name :")
+        self.bot.register_next_step_handler(message, self.process_rename_file)
+    def process_rename_file(self, message):
+        """Main process"""
+        if not tg_helpers.check_message_content_type(message, "text"):
+            self.bot.send_message(message.chat.id, "Please only send text ❗️")
+            self.handle_start(message)
+            return
+        user_folder = file_utils.check_user_folder(message)
+        file_path = file_utils.list_files_by_time(user_folder)[0]
+        new_name = message.text
+        new_file_path = file_utils.rename_file(file_path, new_name)
+        tg_helpers.send_document(self.bot, message.chat.id, new_file_path)
+        self.handle_start(message)
 
     def run(self):
         """Start polling for messages."""
