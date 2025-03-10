@@ -10,10 +10,7 @@ Features
 - Word to PDF
 - Merge PDF
 - Unlock PDF
-
-
-
-
+- Rename File
 
 **Telegram Bot ID : [@ispdfbot](https://t.me/ispdfbot)**
 -
