@@ -253,7 +253,7 @@ class PDFConverterBot:
     
     def handle_rename_file(self, message):
         """Handle rename file"""
-        self.bot.send_message(message.chat.id, "Please send your file for rename:")
+        self.bot.send_message(message.chat.id, "Please send your file for rename:", reply_markup=self.back_keyboard)
         self.bot.register_next_step_handler(message, self.process_rename_file_get_file)
 
     def process_rename_file_get_file(self, message):
