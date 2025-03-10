@@ -262,8 +262,8 @@ class PDFConverterBot:
             self.bot.send_message(message.chat.id, "Content type is invalid ❗️")
             self.handle_start(message)
             return
-        elif not tg_helpers.check_file_size(message, 40):
-            self.bot.send_message(message.chat.id, "Please send a file under 40 MB ❗️")
+        elif not tg_helpers.check_file_size(message, 20):
+            self.bot.send_message(message.chat.id, "Please send a file under 20 MB ❗️")
             self.handle_start(message)
             return
         user_folder = file_utils.check_user_folder(message)
