@@ -1,4 +1,5 @@
 telebot
+pyTelegramBotAPI
 pypdf
 pikepdf
 img2pdf
@@ -7,3 +8,6 @@ python-docx
 docx2pdf
 aspose-words
 python-dotenv
+pdf2image
+pptxtopdf
+python-pptx

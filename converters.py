@@ -4,9 +4,12 @@ import pikepdf
 import aspose.words as aw
 import docx2pdf
 import docx
+import pptx.presentation
 from pypdf import PdfWriter
 import file_utils
 import pdf2image
+import pptxtopdf
+import pptx
 
 def convert_images_to_pdf(user_folder, output_pdf):
     """
@@ -77,7 +80,14 @@ def is_docx_file(docx_path):
         return True
     except Exception:
         return False
-
+    
+def is_pptx_file(pptx_path):
+    try:
+        pptx.Presentation(pptx_path)
+        return True
+    except:
+        return False
+    
 def convert_pdf_to_image(user_folder, pdf_path):
     """
     Convert pdf pages to image and save in user_folder path.
@@ -90,3 +100,8 @@ def convert_pdf_to_image(user_folder, pdf_path):
     os.remove(pdf_path)
     return file_utils.list_files_by_time(user_folder)
 
+def convert_pptx_to_pdf(pptx_path, pdf_folder_path):
+    """
+    Convert Powerpoint pages to pdf file
+    """
+    pptxtopdf.convert(pptx_path, pdf_folder_path)

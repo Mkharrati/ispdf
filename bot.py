@@ -25,7 +25,7 @@ class PDFConverterBot:
     def init_keyboards(self):
         """Initialize custom keyboards used by the bot."""
         self.main_keyboard = types.ReplyKeyboardMarkup(row_width=2, resize_keyboard=True)
-        self.main_keyboard.add("PDF to Word", "Image To PDF", "Word to PDF", "Unlock PDF", "Merge PDF", "PDF to image", "Rename File")
+        self.main_keyboard.add("PDF to Word", "Image To PDF", "Word to PDF", "Unlock PDF", "Merge PDF", "PDF to image", "Rename File", "Powerpoint to pdf")
         
         self.finish_keyboard = types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
         self.finish_keyboard.add("Finish", "Back")
@@ -43,6 +43,7 @@ class PDFConverterBot:
         self.bot.message_handler(func=lambda m: "Merge PDF" in m.text)(self.handle_merge_pdf)
         self.bot.message_handler(func=lambda m: "PDF to image" in m.text)(self.handle_pdf_to_image)
         self.bot.message_handler(func=lambda m: "Rename File" in m.text)(self.handle_rename_file)
+        self.bot.message_handler(func=lambda m: "Powerpoint to pdf" in m.text)(self.handle_pptx_to_pdf)
     
     def handle_start(self, message):
         """Handler for /start command."""
@@ -53,14 +54,13 @@ class PDFConverterBot:
     def handle_image_to_pdf(self, message):
         """Handle the Image To PDF conversion process."""
         file_utils.check_user_folder(message)
-        content_type = tg_helpers.get_message_content_type(message)
-        if content_type == "photo":
+        if tg_helpers.check_content_type(message, "photo"):
             user_folder = file_utils.check_user_folder(message)
             # Download and save the image
             tg_helpers.get_image(self.bot, message, user_folder, file_utils.random_name)
             count = len(file_utils.list_files_by_time(user_folder))
             self.bot.send_message(message.chat.id, f"PDF Pages : {count} \n Send Next :", reply_markup=self.finish_keyboard)
-        elif content_type == "text":
+        elif tg_helpers.check_content_type(message, "text"):
             if message.text == "Finish":
                 user_folder = file_utils.check_user_folder(message)
                 output_pdf = os.path.join(user_folder, f"{file_utils.random_name()}.pdf")
@@ -190,8 +190,7 @@ class PDFConverterBot:
     
     def handle_merge_pdf(self, message):
         """Handle merging of multiple PDFs."""
-        content_type = tg_helpers.get_message_content_type(message)
-        if content_type == "text":
+        if tg_helpers.check_content_type(message, "text"):
             if message.text == "Back":
                 self.handle_start(message)
                 return
@@ -258,7 +257,13 @@ class PDFConverterBot:
 
     def process_rename_file_get_file(self, message):
         """process to get file from user"""
-        if not tg_helpers.check_message_content_type(message, ["document","photo"]):
+        if tg_helpers.check_message_content_type(message, ["text"]):
+            if "Back" in message.text:
+                self.handle_start(message)
+                return
+            else:
+                self.bot.send_message(message.chat.id, "Please only send document ❗️")
+        elif not tg_helpers.check_message_content_type(message, ["document","photo"]):
             self.bot.send_message(message.chat.id, "Content type is invalid ❗️")
             self.handle_start(message)
             return
@@ -290,6 +295,45 @@ class PDFConverterBot:
         new_file_path = file_utils.rename_file(file_path, new_name)
         tg_helpers.send_document(self.bot, message.chat.id, new_file_path)
         self.handle_start(message)
+
+    def handle_pptx_to_pdf(self, message):
+        """Handle Powerpoint to pdf"""
+        self.bot.send_message(message.chat.id, "Please send your powerpoint file :", reply_markup=self.back_keyboard)
+        self.bot.register_next_step_handler(message, self.process_pptx_to_pdf)
+    
+    def process_pptx_to_pdf(self, message):
+        if tg_helpers.check_message_content_type(message, ["text"]):
+            if "Back" in message.text:
+                self.handle_start(message)
+                return
+            else:
+                self.bot.send_message(message.chat.id, "Please only send document ❗️")
+                self.handle_start(message)
+                return
+        elif not tg_helpers.check_message_content_type(message, ["document"]):
+            self.bot.send_message(message.chat.id, "Content type is invalid ❗️")
+            self.handle_start(message)
+            return
+        elif not tg_helpers.check_file_size(message, 20):
+            self.bot.send_message(message.chat.id, "Please send a file under 20 MB ❗️")
+            self.handle_start(message)
+            return
+        user_folder = file_utils.check_user_folder(message)
+        pptx_file_name = message.document.file_name
+        pptx_file_path = os.path.join(user_folder, pptx_file_name)
+        pptx_file = tg_helpers.download_file(self.bot, message)
+        pptx_path = file_utils.save_file(pptx_file, pptx_file_path)
+        if not converters.is_pptx_file(pptx_path):
+            self.bot.send_message(message.chat.id, "The file is invalid ❗️")
+            self.handle_start(message)
+            return
+        converters.convert_pptx_to_pdf(pptx_path, user_folder)
+        # Here, user directory contains pptx and pdf file so the index 1 is the pdf path:
+        pdf_path = file_utils.list_files_by_time(user_folder)[1]
+        tg_helpers.send_document(self.bot, message.chat.id, pdf_path)
+        self.handle_start(message)
+        return
+
 
     def run(self):
         """Start polling for messages."""
