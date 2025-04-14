@@ -44,6 +44,7 @@ class PDFConverterBot:
         self.bot.message_handler(func=lambda m: "PDF to image" in m.text)(self.handle_pdf_to_image)
         self.bot.message_handler(func=lambda m: "Rename File" in m.text)(self.handle_rename_file)
         self.bot.message_handler(func=lambda m: "Powerpoint to pdf" in m.text)(self.handle_pptx_to_pdf)
+        self.bot.message_handler(func=lambda m: "Back" in m.text)(self.handle_start)
     
     def handle_start(self, message):
         """Handler for /start command."""
