@@ -2,6 +2,7 @@ import os
 import telebot
 from telebot import types
 from dotenv import load_dotenv
+import time
 
 # Import our new helper modules
 import file_utils
@@ -36,6 +37,7 @@ class PDFConverterBot:
     def register_handlers(self):
         """Register all command and message handlers."""
         self.bot.message_handler(commands=["start"])(self.handle_start)
+        self.bot.message_handler(content_types=["photo"])(self.process_image_to_pdf)
         self.bot.message_handler(func=lambda m: "Image To PDF" in m.text)(self.handle_image_to_pdf)
         self.bot.message_handler(func=lambda m: "PDF to Word" in m.text)(self.handle_pdf_to_word)
         self.bot.message_handler(func=lambda m: "Unlock PDF" in m.text)(self.handle_unlock_pdf)
@@ -55,13 +57,37 @@ class PDFConverterBot:
     def handle_image_to_pdf(self, message):
         """Handle the Image To PDF conversion process."""
         file_utils.check_user_folder(message)
-        if tg_helpers.check_content_type(message, "photo"):
-            user_folder = file_utils.check_user_folder(message)
-            # Download and save the image
-            tg_helpers.get_image(self.bot, message, user_folder, file_utils.random_name)
-            count = len(file_utils.list_files_by_time(user_folder))
-            self.bot.send_message(message.chat.id, f"PDF Pages : {count} \n Send Next :", reply_markup=self.finish_keyboard)
-        elif tg_helpers.check_content_type(message, "text"):
+        user_folder = file_utils.check_user_folder(message)
+        if len(file_utils.list_files_by_time(user_folder)) == 0:
+            self.bot.send_message(message.chat.id, "Send your photos:", reply_markup=self.back_keyboard)
+
+    def process_image_to_pdf(self, message):
+        if message.media_group_id:
+            if tg_helpers.check_content_type(message, "photo"):
+                print(len(file_utils.list_files_by_time(file_utils.check_user_folder(message))))
+                user_folder = file_utils.check_user_folder(message)
+                # Download and save the image
+                tg_helpers.get_image(self.bot, message, user_folder, file_utils.random_name)
+                count = len(file_utils.list_files_by_time(user_folder))
+                time.sleep(5)
+            if len(file_utils.list_files_by_time(file_utils.check_user_folder(message))) >= 1:
+                print(len(file_utils.list_files_by_time(file_utils.check_user_folder(message))))
+                user_folder = file_utils.check_user_folder(message)
+                output_pdf = os.path.join(user_folder, f"{file_utils.random_name()}.pdf")
+                pdf_path = converters.convert_images_to_pdf(user_folder, output_pdf)
+                tg_helpers.send_document(self.bot, message.chat.id, pdf_path)
+                file_utils.delete_user_content(message)
+                self.handle_start(message)
+                return
+        else:
+            if tg_helpers.check_content_type(message, "photo"):
+                print(len(file_utils.list_files_by_time(file_utils.check_user_folder(message))))
+                user_folder = file_utils.check_user_folder(message)
+                # Download and save the image
+                tg_helpers.get_image(self.bot, message, user_folder, file_utils.random_name)
+                count = len(file_utils.list_files_by_time(user_folder))
+                self.bot.send_message(message.chat.id, f"PDF Pages : {count} \n Send Next :", reply_markup=self.finish_keyboard)
+                self.bot.register_next_step_handler(message, self.process_image_to_pdf)
             if message.text == "Finish":
                 user_folder = file_utils.check_user_folder(message)
                 output_pdf = os.path.join(user_folder, f"{file_utils.random_name()}.pdf")
@@ -70,20 +96,7 @@ class PDFConverterBot:
                 file_utils.delete_user_content(message)
                 self.handle_start(message)
                 return
-            elif message.text == "Back":
-                file_utils.delete_user_content(message)
-                self.handle_start(message)
-                return
-            elif message.text == "Image To PDF":
-                user_folder = file_utils.check_user_folder(message)
-                if len(file_utils.list_files_by_time(user_folder)) == 0:
-                    self.bot.send_message(message.chat.id, "Send your photos:", reply_markup=self.back_keyboard)
-            else:
-                self.bot.send_message(message.chat.id, "Please just send a <b>photo</b>.", parse_mode="html", reply_markup=self.finish_keyboard)
-        else:
-            self.bot.send_message(message.chat.id, "Please just send a <b>photo</b>.", parse_mode="html", reply_markup=self.finish_keyboard)
-        
-        self.bot.register_next_step_handler(message, self.handle_image_to_pdf)
+
     
     def handle_pdf_to_word(self, message):
         """Start the PDF to Word conversion process."""
@@ -329,7 +342,7 @@ class PDFConverterBot:
             self.handle_start(message)
             return
         converters.convert_pptx_to_pdf(pptx_path, user_folder)
-        # Here, user directory contains pptx and pdf file so the index 1 is the pdf path:
+        # Here, user directory contains pptx and pdf file so the index 1 will be the pdf file path:
         pdf_path = file_utils.list_files_by_time(user_folder)[1]
         tg_helpers.send_document(self.bot, message.chat.id, pdf_path)
         self.handle_start(message)
