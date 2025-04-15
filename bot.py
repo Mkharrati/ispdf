@@ -286,6 +286,8 @@ class PDFConverterBot:
                 return
             else:
                 self.bot.send_message(message.chat.id, "Please only send document ❗️")
+                self.handle_start(message)
+                return
         elif not tg_helpers.check_message_content_type(message, ["document","photo"]):
             self.bot.send_message(message.chat.id, "Content type is invalid ❗️")
             self.handle_start(message)
@@ -296,6 +298,7 @@ class PDFConverterBot:
             return
         user_folder = file_utils.check_user_folder(message)
         # documents has file name but other type like 'photo' no.
+        file_name = ""
         if tg_helpers.check_message_content_type(message, "document"):
             file_name = message.document.file_name
         elif tg_helpers.check_message_content_type(message, "photo"):
@@ -379,6 +382,7 @@ class PDFConverterBot:
             self.bot.send_message(message.chat.id, "Please just send a <b>photo</b>.", parse_mode="html")
             self.handle_start(message)
             return
+        wait_message = self.bot.send_message(message.chat.id, "Please wait ...")
         user_folder = file_utils.check_user_folder(message)
         image_path = os.path.join(user_folder, f"{file_utils.random_name()}.jpg")
         image = tg_helpers.download_file(self.bot, message)
@@ -388,6 +392,7 @@ class PDFConverterBot:
             self.handle_start(message)
             return
         self.bot.send_message(message.chat.id, text)
+        self.bot.delete_message(wait_message.chat.id, wait_message.message_id)
         self.handle_start(message)
         return
 
