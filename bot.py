@@ -388,6 +388,10 @@ class PDFConverterBot:
         image = tg_helpers.download_file(self.bot, message)
         image_path = file_utils.save_file(image, image_path)
         text = converters.image_to_text(image_path, OCR_TOKEN)
+        if isinstance(text, tuple):
+            self.bot.send_message(message.chat.id, "An error occurred ❗️ Try again later.")
+            self.handle_start(message)
+            return
         if text in "":
             self.handle_start(message)
             return
