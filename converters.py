@@ -6,10 +6,15 @@ import docx2pdf
 import docx
 import pptx.presentation
 from pypdf import PdfWriter
+from pypdf import PdfReader
 import file_utils
 import pdf2image
 import pptxtopdf
 import pptx
+import requests
+import json
+
+OCR_URL = "https://www.eboo.ir/api/ocr/getway"
 
 def convert_images_to_pdf(user_folder, output_pdf):
     """
@@ -22,7 +27,7 @@ def convert_images_to_pdf(user_folder, output_pdf):
         f.write(img2pdf.convert(image_files, layout_fun=layout_fun))
     return output_pdf
 
-def convert_pdf_to_docx(pdf_path, output_docx):
+def convert_pdf_to_docx_Aspose_Words(pdf_path, output_docx):
     """
     Convert a PDF file to a DOCX file using Aspose.Words.
     """
@@ -105,3 +110,91 @@ def convert_pptx_to_pdf(pptx_path, pdf_folder_path):
     Convert Powerpoint pages to pdf file
     """
     pptxtopdf.convert(pptx_path, pdf_folder_path)
+
+def number_of_pdf_pages(pdf_path):
+    reader = PdfReader(pdf_path)
+    num_page = len(reader.pages)
+    return num_page
+
+def convert_pdf_to_docx(pdf_path, output_docx, OCR_TOKEN):
+    file_name = pdf_path
+    upload = {'filehandle':(file_name, open(file_name, 'rb'), 'multipart/form-data')}
+    payload = {
+    "token": OCR_TOKEN,
+    "command": "addfile",
+    }
+    try:
+        response = requests.post(OCR_URL, data=payload, files=upload)
+        data = response.text
+        json_data = json.loads(data)
+    except:
+        return ("False", "Error in line 131")
+    print("pdf sent to server successfully")
+    
+    if "Done" not in json_data['Status']:
+        return ("False", "Error in line 135")
+    
+    file_token = json_data["FileToken"]
+
+    payload = {
+    "token": OCR_TOKEN,
+    "command": "convert",
+    "filetoken": file_token,
+    "method": 1
+    }
+    try:
+        response = requests.post(OCR_URL, data=payload)
+        data = response.text
+        json_data = json.loads(data)
+    except:
+        return ("False", "Error in line 150")
+    
+    if "Done" not in json_data["Status"]:
+        return ("False", "Error in line 153")
+    
+    docx_url = json_data["FileToDownload"]
+
+    print("docx downloaded from server successfully")
+
+    file_content = file_utils.download_link(docx_url)
+    docx_path = file_utils.save_file(file_content, output_docx)
+    return docx_path
+
+def image_to_text(image_path, OCR_TOKEN):
+    file_name = image_path
+    upload = {'filehandle':(file_name, open(file_name, 'rb'), 'multipart/form-data')}
+    payload = {
+    "token": OCR_TOKEN,
+    "command": "addfile",
+    }
+    try:
+        response = requests.post(OCR_URL, data=payload, files=upload)
+        data = response.text
+        json_data = json.loads(data)
+    except:
+        return ("False", "Error in line 175")
+    
+    print("image sent to server successfully")
+    
+    if "Done" not in json_data['Status']:
+        return ("False", data)
+    file_token = json_data["FileToken"]
+
+    payload = {
+    "token": OCR_TOKEN,
+    "command": "convert",
+    "filetoken": file_token,
+    "output": "txtraw",
+    "method": 4
+    }
+    try:
+        response = requests.post(OCR_URL, data=payload)
+        data = response.text
+    except:
+        return ("False", "Error in line 194")
+    return data
+    
+
+    
+
+

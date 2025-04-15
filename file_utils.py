@@ -1,7 +1,7 @@
 import os
 import random
 from shutil import rmtree
-
+import requests
 
 def random_name(length=9):
     """Generate a random numeric string of given length."""
@@ -54,7 +54,10 @@ def delete_user_content(message, base_path="./Content"):
     """Delete the folder corresponding to the user's content."""
     user_folder = os.path.join(base_path, str(message.chat.id))
     if os.path.exists(user_folder):
-        rmtree(user_folder)
+        try:
+            rmtree(user_folder)
+        except:
+            pass
 
 def file_extension(file_path):
     """Return file extension"""
@@ -80,3 +83,8 @@ def rename_file(file_path, new_path):
         
     os.rename(file_path, new_path)
     return new_path
+
+def download_link(url):
+    response = requests.get(url)
+    content = response.content
+    return content

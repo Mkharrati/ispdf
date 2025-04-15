@@ -36,7 +36,7 @@ def check_content_type(message, expected_type, extension=""):
     """
     Check if the message has the expected content type and, if a file, optionally the correct extension.
     """
-    if message.content_type != expected_type:
+    if message.content_type not in expected_type:
         return False
     if extension and hasattr(message, "document"):
         return message.document.file_name.endswith(extension)
