@@ -5,6 +5,7 @@ A telegram bot that provides PDF and document services.
 Features
 -
 - Image To PDF
+- Image To text
 - Powerpoint to PDF
 - Word to PDF
 - Merge PDF
