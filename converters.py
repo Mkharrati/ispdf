@@ -13,6 +13,7 @@ import pptxtopdf
 import pptx
 import requests
 import json
+import API.OCR as ocr
 
 OCR_URL = "https://www.eboo.ir/api/ocr/getway"
 
@@ -69,7 +70,7 @@ def unlock_pdf(pdf_path):
         return None
 
 def is_pdf_file(pdf_path):
-    """Check if a file is a valid PDF."""
+    """Check the file that is a valid PDF."""
     if not pdf_path.endswith(".pdf"):
         return False
     try:
@@ -112,89 +113,39 @@ def convert_pptx_to_pdf(pptx_path, pdf_folder_path):
     pptxtopdf.convert(pptx_path, pdf_folder_path)
 
 def number_of_pdf_pages(pdf_path):
+    """
+    return the number of the pdf pages via pdf_path.
+    """
     reader = PdfReader(pdf_path)
     num_page = len(reader.pages)
     return num_page
 
 def convert_pdf_to_docx(pdf_path, output_docx, OCR_TOKEN):
-    file_name = pdf_path
-    upload = {'filehandle':(file_name, open(file_name, 'rb'), 'multipart/form-data')}
-    payload = {
-    "token": OCR_TOKEN,
-    "command": "addfile",
-    }
-    try:
-        response = requests.post(OCR_URL, data=payload, files=upload)
-        data = response.text
-        json_data = json.loads(data)
-    except:
-        return ("False", "Error in line 131")
-    print("pdf sent to server successfully")
-    
-    if "Done" not in json_data['Status']:
-        return ("False", "Error in line 135")
-    
+    """
+    convert pdf to docx via api. return docx path
+    """
+    json_data = ocr.send_file(pdf_path, OCR_TOKEN)
+    if "False" in json_data:
+        print(json_data[1]) # for debug
+        return "False"
     file_token = json_data["FileToken"]
-
-    payload = {
-    "token": OCR_TOKEN,
-    "command": "convert",
-    "filetoken": file_token,
-    "method": 1
-    }
-    try:
-        response = requests.post(OCR_URL, data=payload)
-        data = response.text
-        json_data = json.loads(data)
-    except:
-        return ("False", "Error in line 150")
-    
-    if "Done" not in json_data["Status"]:
-        return ("False", "Error in line 153")
-    
-    docx_url = json_data["FileToDownload"]
-
-    print("docx downloaded from server successfully")
-
+    docx_url = ocr.pdf_to_docx(file_token, OCR_TOKEN)
+    if "False" in docx_url:
+        print(docx_url[1]) # for debug
+        return "False"
     file_content = file_utils.download_link(docx_url)
+    print("docx downloaded from server successfully")
     docx_path = file_utils.save_file(file_content, output_docx)
     return docx_path
 
 def image_to_text(image_path, OCR_TOKEN):
-    file_name = image_path
-    upload = {'filehandle':(file_name, open(file_name, 'rb'), 'multipart/form-data')}
-    payload = {
-    "token": OCR_TOKEN,
-    "command": "addfile",
-    }
-    try:
-        response = requests.post(OCR_URL, data=payload, files=upload)
-        data = response.text
-        json_data = json.loads(data)
-    except:
-        return ("False", "Error in line 175")
-    
-    print("image sent to server successfully")
-    
-    if "Done" not in json_data['Status']:
-        return ("False", data)
+    """
+    extract text from image with api. return extracted text
+    """
+    json_data = ocr.send_file(image_path, OCR_TOKEN)
+    if "False" in json_data:
+        print(json_data[1]) # for debug
+        return "False"
     file_token = json_data["FileToken"]
-
-    payload = {
-    "token": OCR_TOKEN,
-    "command": "convert",
-    "filetoken": file_token,
-    "output": "txtraw",
-    "method": 4
-    }
-    try:
-        response = requests.post(OCR_URL, data=payload)
-        data = response.text
-    except:
-        return ("False", "Error in line 194")
-    return data
-    
-
-    
-
-
+    text = ocr.image_to_text(file_token, OCR_TOKEN)
+    return text

@@ -307,7 +307,7 @@ class PDFConverterBot:
         file = tg_helpers.download_file(self.bot, message)
         output_path = os.path.join(user_folder, f"{file_utils.random_name()}.{file_extension}")
         file_utils.save_file(file, output_path)
-        self.bot.send_message(message.chat.id, "Enter your desired name :")
+        self.bot.send_message(message.chat.id, "Enter new name :")
         self.bot.register_next_step_handler(message, self.process_rename_file)
     def process_rename_file(self, message):
         """Main process"""

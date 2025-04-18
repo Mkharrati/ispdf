@@ -85,6 +85,7 @@ def rename_file(file_path, new_path):
     return new_path
 
 def download_link(url):
+    """Download url an return Content"""
     response = requests.get(url)
     content = response.content
     return content
