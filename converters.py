@@ -13,7 +13,7 @@ import pptxtopdf
 import pptx
 import requests
 import json
-import API.OCR as ocr
+import API.OCR.OCR as ocr
 
 OCR_URL = "https://www.eboo.ir/api/ocr/getway"
 
