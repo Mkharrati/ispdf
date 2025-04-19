@@ -13,6 +13,7 @@ Features
 - PDF to image
 - PDF to Word
 - Rename File
+- Create QRcode
 
 **Telegram Bot ID : [@ispdfbot](https://t.me/ispdfbot)**
 -

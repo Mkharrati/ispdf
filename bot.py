@@ -417,6 +417,10 @@ class PDFConverterBot:
         if "Back" in message.text:
             self.handle_start(message)
             return
+        if len(message.text) > 2000:
+            self.bot.send_message(message.chat.id, "the text is too long ❗️")
+            self.handle_start(message)
+            return
         text = message.text
         user_folder = file_utils.check_user_folder(message)
         file_name = f"{file_utils.random_name()}.jpg"

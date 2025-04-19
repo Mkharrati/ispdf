@@ -11,3 +11,4 @@ python-dotenv
 pdf2image
 pptxtopdf
 python-pptx
+qrcode
