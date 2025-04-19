@@ -29,7 +29,11 @@ class PDFConverterBot:
     def init_keyboards(self):
         """Initialize custom keyboards used by the bot."""
         self.main_keyboard = types.ReplyKeyboardMarkup(row_width=2, resize_keyboard=True)
-        self.main_keyboard.add("Image To PDF", "Word to PDF", "PDF to Word", "image to text", "Unlock PDF", "Merge PDF", "PDF to image", "Rename File", "Powerpoint to pdf")
+        self.main_keyboard.add("Image To PDF", "Word to PDF",
+                                "PDF to Word", "image to text",
+                                  "Unlock PDF", "Merge PDF",
+                                    "PDF to image", "Rename File",
+                                      "Powerpoint to pdf", "QRcode")
         
         self.finish_keyboard = types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
         self.finish_keyboard.add("Finish", "Back")
@@ -49,6 +53,7 @@ class PDFConverterBot:
         self.bot.message_handler(func=lambda m: "Rename File" in m.text)(self.handle_rename_file)
         self.bot.message_handler(func=lambda m: "Powerpoint to pdf" in m.text)(self.handle_pptx_to_pdf)
         self.bot.message_handler(func=lambda m: "image to text" in m.text)(self.handle_image_to_text)
+        self.bot.message_handler(func=lambda m: "QRcode" in m.text)(self.text_to_qrcode)
         self.bot.message_handler(func=lambda m: "Back" in m.text)(self.handle_start)
     
     def handle_start(self, message):
@@ -367,9 +372,9 @@ class PDFConverterBot:
     def handle_image_to_text(self, message):
         """process to extract text from image"""
         self.bot.send_message(message.chat.id ,"Please send your image to extract texts :", reply_markup=self.back_keyboard)
-        self.bot.register_next_step_handler(message, self.proccess_image_to_text)
+        self.bot.register_next_step_handler(message, self.process_image_to_text)
     
-    def proccess_image_to_text(self, message):
+    def process_image_to_text(self, message):
         if tg_helpers.check_message_content_type(message, ["text"]):
             if "Back" in message.text:
                 self.handle_start(message)
@@ -397,6 +402,24 @@ class PDFConverterBot:
             return
         self.bot.send_message(message.chat.id, text)
         self.bot.delete_message(wait_message.chat.id, wait_message.message_id)
+        self.handle_start(message)
+        return
+    
+    def text_to_qrcode(self, message):
+        """convert text to qrcode"""
+        self.bot.send_message(message.chat.id, "Please Send your text :", reply_markup=self.back_keyboard)
+        self.bot.register_next_step_handler(message, self.process_text_to_qrcode)
+    def process_text_to_qrcode(self, message):
+        if not tg_helpers.check_content_type(message, "text"):
+            self.bot.send_message(message.chat.id, "Please only send text ❗️")
+            self.handle_start(message)
+            return
+        text = message.text
+        user_folder = file_utils.check_user_folder(message)
+        file_name = f"{file_utils.random_name()}.jpg"
+        image_path = os.path.join(user_folder, file_name)
+        qrcode_path = converters.text_to_qrcode(text, image_path)
+        tg_helpers.send_document(self.bot, message.chat.id, qrcode_path)
         self.handle_start(message)
         return
 

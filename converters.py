@@ -9,11 +9,12 @@ from pypdf import PdfWriter
 from pypdf import PdfReader
 import file_utils
 import pdf2image
-import pptxtopdf
+#import pptxtopdf
 import pptx
 import requests
 import json
 import API.OCR.OCR as ocr
+import qrcode
 
 OCR_URL = "https://www.eboo.ir/api/ocr/getway"
 
@@ -151,3 +152,11 @@ def image_to_text(image_path, OCR_TOKEN):
     text = ocr.image_to_text(file_token, OCR_TOKEN)
     ocr.delete_file(file_token, OCR_TOKEN)
     return text
+
+def text_to_qrcode(text:str, image_path:str):
+    """
+    convert text to qrcode. return image path
+    """
+    image = qrcode.make(text)
+    image.save(image_path)
+    return image_path
