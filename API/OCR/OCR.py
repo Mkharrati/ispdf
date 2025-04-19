@@ -4,7 +4,17 @@ import json
 OCR_URL = "https://www.eboo.ir/api/ocr/getway"
 
 def send_file(file_path, OCR_TOKEN):
-    """send file to ocr server. return json_data"""
+    """
+    send file to ocr server. return json_data.
+    
+    json_data sample :
+    {
+        "Status":"Done",
+        "PageCount":"42",
+        "FileToken":"Nzrwxxxxxxxx4f3e5",
+        "ConvertMethods":"1,2,3,4"
+    }
+    """
     file_name = file_path
     upload = {'filehandle':(file_name, open(file_name, 'rb'), 'multipart/form-data')}
     payload = {
@@ -19,18 +29,19 @@ def send_file(file_path, OCR_TOKEN):
         return ("False", error)
     print(f"{file_name} sent to server successfully")
     return json_data
+    
+
+def pdf_to_docx(file_token, OCR_TOKEN, method = 1):
     """
+    Convert pdf to docx (on the server) via file_token. return docx_url.
+
     json_data sample :
     {
         "Status":"Done",
-        "PageCount":"42",
-        "FileToken":"Nzrwxxxxxxxx4f3e5",
-        "ConvertMethods":"1,2,3,4"
+        " FileToDownload ":
+        "https://www.eboo.ir/APIDownloader/OCRAPI/OutputFile.Docx"
     }
     """
-
-def pdf_to_docx(file_token, OCR_TOKEN, method = 1):
-    """Convert pdf to docx (on the server) via file_token. return docx_url"""
     payload = {
     "token": OCR_TOKEN,
     "command": "convert",
@@ -46,14 +57,6 @@ def pdf_to_docx(file_token, OCR_TOKEN, method = 1):
     except Exception as error:
         return ("False", error)
     return docx_url
-    """
-    json_data sample :
-    {
-        "Status":"Done",
-        " FileToDownload ":
-        "https://www.eboo.ir/APIDownloader/OCRAPI/OutputFile.Docx"
-    }
-    """
 
 def image_to_text(file_token, OCR_TOKEN):
     """extract texts from image (on the server) via file_token. return text"""
@@ -70,3 +73,23 @@ def image_to_text(file_token, OCR_TOKEN):
     except Exception as error:
         return ("False", error)
     return extracted_text
+
+def delete_file(file_token, OCR_TOKEN):
+    """
+    delete file from the server via file_token.
+    """
+    payload = {
+    "token": OCR_TOKEN,
+    "command": "deletefile",
+    "filetoken": file_token,
+    }
+    try:
+        response = requests.post(OCR_URL, data=payload)
+        print(f"{file_token} deleted")
+        data = response.text
+        json_data = json.loads(data)
+        if "DeleteDone" not in json_data["Status"]:
+            return ("False", json_data)
+    except Exception as error:
+        return ("False", error)
+    return data

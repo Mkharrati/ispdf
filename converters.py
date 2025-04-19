@@ -135,6 +135,7 @@ def convert_pdf_to_docx(pdf_path, output_docx, OCR_TOKEN):
         return "False"
     file_content = file_utils.download_link(docx_url)
     print("docx downloaded from server successfully")
+    ocr.delete_file(file_token, OCR_TOKEN)
     docx_path = file_utils.save_file(file_content, output_docx)
     return docx_path
 
@@ -148,4 +149,5 @@ def image_to_text(image_path, OCR_TOKEN):
         return "False"
     file_token = json_data["FileToken"]
     text = ocr.image_to_text(file_token, OCR_TOKEN)
+    ocr.delete_file(file_token, OCR_TOKEN)
     return text
