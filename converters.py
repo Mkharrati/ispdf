@@ -9,7 +9,7 @@ from pypdf import PdfWriter
 from pypdf import PdfReader
 import file_utils
 import pdf2image
-#import pptxtopdf
+import pptxtopdf
 import pptx
 import requests
 import json
