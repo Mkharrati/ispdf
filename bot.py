@@ -414,6 +414,9 @@ class PDFConverterBot:
             self.bot.send_message(message.chat.id, "Please only send text ❗️")
             self.handle_start(message)
             return
+        if "Back" in message.text:
+            self.handle_start(message)
+            return
         text = message.text
         user_folder = file_utils.check_user_folder(message)
         file_name = f"{file_utils.random_name()}.jpg"
