@@ -15,6 +15,12 @@ import requests
 import json
 import API.OCR.OCR as ocr
 import qrcode
+# text to pdf requirements : 
+from reportlab.pdfgen import canvas
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from bidi.algorithm import get_display
+import arabic_reshaper
 
 OCR_URL = "https://www.eboo.ir/api/ocr/getway"
 
@@ -160,3 +166,33 @@ def text_to_qrcode(text:str, image_path:str):
     image = qrcode.make(text)
     image.save(image_path)
     return image_path
+
+def text_to_pdf(text, pdf_path):
+    """create a pdf file with 'pdf_path' and write 'text' in it"""
+    pdfmetrics.registerFont(TTFont('Vazir', './media/fonts/Vazir.ttf'))
+    lines = []
+    while text != "":
+        index = 75
+        try:
+            while text[index] not in (" ", ".", "،"):
+                X = text[index]
+                index+=1
+        except:
+            pass
+        lines.append(text[:index])
+        text = text[index:]
+
+    y = 800
+    c = canvas.Canvas(pdf_path)
+    for line in lines:
+        reshaped_text = arabic_reshaper.reshape(line)
+        bidi_text = get_display(reshaped_text)
+        c.setFont("Vazir", 14)
+        c.drawRightString(550, y, bidi_text)  # RTL position
+        y -= 30
+        if y < 30 :
+            c.showPage()
+            y = 800
+        
+    c.save()
+    return pdf_path

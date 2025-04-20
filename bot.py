@@ -30,10 +30,11 @@ class PDFConverterBot:
         """Initialize custom keyboards used by the bot."""
         self.main_keyboard = types.ReplyKeyboardMarkup(row_width=2, resize_keyboard=True)
         self.main_keyboard.add("Image To PDF", "Word to PDF",
-                                "PDF to Word", "image to text",
-                                  "Unlock PDF", "Merge PDF",
-                                    "PDF to image", "Rename File",
-                                      "Powerpoint to pdf", "QRcode")
+                                "Text to pdf","PDF to Word", 
+                                "image to text","Unlock PDF",
+                                  "PDF to image", "Merge PDF",
+                                    "Rename File","Powerpoint to pdf",
+                                      "QRcode")
         
         self.finish_keyboard = types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
         self.finish_keyboard.add("Finish", "Back")
@@ -54,6 +55,7 @@ class PDFConverterBot:
         self.bot.message_handler(func=lambda m: "Powerpoint to pdf" in m.text)(self.handle_pptx_to_pdf)
         self.bot.message_handler(func=lambda m: "image to text" in m.text)(self.handle_image_to_text)
         self.bot.message_handler(func=lambda m: "QRcode" in m.text)(self.text_to_qrcode)
+        self.bot.message_handler(func=lambda m: "Text to pdf" in m.text)(self.text_to_pdf)
         self.bot.message_handler(func=lambda m: "Back" in m.text)(self.handle_start)
     
     def handle_start(self, message):
@@ -429,7 +431,26 @@ class PDFConverterBot:
         tg_helpers.send_document(self.bot, message.chat.id, qrcode_path)
         self.handle_start(message)
         return
-
+    
+    def text_to_pdf(self, message):
+        """convert text to pdf file"""
+        self.bot.send_message(message.chat.id, "Please Send your text :", reply_markup=self.back_keyboard)
+        self.bot.register_next_step_handler(message, self.process_text_to_pdf)
+    def process_text_to_pdf(self, message):
+        if not tg_helpers.check_content_type(message, "text"):
+            self.bot.send_message(message.chat.id, "Please only send text ❗️")
+            self.handle_start(message)
+            return
+        if "Back" in message.text:
+            self.handle_start(message)
+            return
+        user_folder = file_utils.check_user_folder(message)
+        file_name = f"{file_utils.random_name()}.pdf"
+        pdf_path = os.path.join(user_folder, file_name)
+        converters.text_to_pdf(message.text, pdf_path)
+        tg_helpers.send_document(self.bot, message.chat.id, pdf_path)
+        self.handle_start(message)
+        return
     def run(self):
         """Start polling for messages."""
         self.bot.polling()

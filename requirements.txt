@@ -12,3 +12,6 @@ pdf2image
 pptxtopdf
 python-pptx
 qrcode
+reportlab
+arabic_reshaper
+python-bidi
