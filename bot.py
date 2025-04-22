@@ -419,7 +419,7 @@ class PDFConverterBot:
         if "Back" in message.text:
             self.handle_start(message)
             return
-        if len(message.text) > 2000:
+        if len(message.text) > 1000:
             self.bot.send_message(message.chat.id, "the text is too long ❗️")
             self.handle_start(message)
             return

@@ -170,24 +170,28 @@ def text_to_qrcode(text:str, image_path:str):
 def text_to_pdf(text, pdf_path):
     """create a pdf file with 'pdf_path' and write 'text' in it"""
     pdfmetrics.registerFont(TTFont('Vazir', './media/fonts/Vazir.ttf'))
+
     lines = []
     while text != "":
-        index = 75
+        index = 65
+
         try:
             while text[index] not in (" ", ".", "،"):
                 X = text[index]
                 index+=1
         except:
             pass
+
         lines.append(text[:index])
         text = text[index:]
 
     y = 800
     c = canvas.Canvas(pdf_path)
+    
     for line in lines:
         reshaped_text = arabic_reshaper.reshape(line)
         bidi_text = get_display(reshaped_text)
-        c.setFont("Vazir", 14)
+        c.setFont("Vazir", 16)
         c.drawRightString(550, y, bidi_text)  # RTL position
         y -= 30
         if y < 30 :
