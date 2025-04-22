@@ -8,6 +8,7 @@ Features
 - Image To text
 - Powerpoint to PDF
 - Word to PDF
+- Text to PDF
 - Merge PDF
 - Unlock PDF
 - PDF to image
