@@ -5,8 +5,10 @@ from dotenv import load_dotenv
 
 # Import our new helper modules
 import file_utils
+import messages.messages
 import telegram_helpers as tg_helpers
 import converters
+import messages
 
 # Load environment variables
 load_dotenv()
@@ -17,6 +19,8 @@ if not TELEGRAM_BOT_TOKEN:
 OCR_TOKEN = os.getenv("OCR_API_TOKEN")
 if not OCR_TOKEN:
     raise ValueError("OCR_TOKEN is missing. Please check your .env file.")
+
+Messages = messages.messages.EnglishMessages
 
 class PDFConverterBot:
     def __init__(self, token):
@@ -29,40 +33,41 @@ class PDFConverterBot:
     def init_keyboards(self):
         """Initialize custom keyboards used by the bot."""
         self.main_keyboard = types.ReplyKeyboardMarkup(row_width=2, resize_keyboard=True)
-        self.main_keyboard.add("Image To PDF", "Word to PDF",
-                                "Text to pdf","PDF to Word", 
-                                "image to text","Unlock PDF",
-                                  "PDF to image", "Merge PDF",
-                                    "Rename File","Powerpoint to pdf",
-                                      "QRcode")
+        self.main_keyboard.add(
+            Messages._IMAGE_PDF, Messages._WORD_PDF,
+            Messages._TEXT_PDF, Messages._PDF_WORD,
+            Messages._IMAGE_TEXT, Messages._UNLOCK_PDF,
+            Messages._PDF_IMAGE, Messages._MERGE_PDF,
+            Messages._RENAME_FILE, Messages._PPT_PDF,
+            Messages._QRCODE
+        )
         
         self.finish_keyboard = types.ReplyKeyboardMarkup(row_width=1, resize_keyboard=True)
-        self.finish_keyboard.add("Finish", "Back")
+        self.finish_keyboard.add(Messages._FINISH, Messages._BACK)
         
         self.back_keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
-        self.back_keyboard.add("Back")
+        self.back_keyboard.add(Messages._BACK)
     
     def register_handlers(self):
         """Register all command and message handlers."""
-        self.bot.message_handler(commands=["start"])(self.handle_start)
-        self.bot.message_handler(func=lambda m: "Image To PDF" in m.text)(self.handle_image_to_pdf)
-        self.bot.message_handler(func=lambda m: "PDF to Word" in m.text)(self.handle_pdf_to_word)
-        self.bot.message_handler(func=lambda m: "Unlock PDF" in m.text)(self.handle_unlock_pdf)
-        self.bot.message_handler(func=lambda m: "Word to PDF" in m.text)(self.handle_word_to_pdf)
-        self.bot.message_handler(func=lambda m: "Merge PDF" in m.text)(self.handle_merge_pdf)
-        self.bot.message_handler(func=lambda m: "PDF to image" in m.text)(self.handle_pdf_to_image)
-        self.bot.message_handler(func=lambda m: "Rename File" in m.text)(self.handle_rename_file)
-        self.bot.message_handler(func=lambda m: "Powerpoint to pdf" in m.text)(self.handle_pptx_to_pdf)
-        self.bot.message_handler(func=lambda m: "image to text" in m.text)(self.handle_image_to_text)
-        self.bot.message_handler(func=lambda m: "QRcode" in m.text)(self.text_to_qrcode)
-        self.bot.message_handler(func=lambda m: "Text to pdf" in m.text)(self.text_to_pdf)
-        self.bot.message_handler(func=lambda m: "Back" in m.text)(self.handle_start)
+        self.bot.message_handler(func=lambda m: Messages._IMAGE_PDF in m.text)(self.handle_image_to_pdf)
+        self.bot.message_handler(func=lambda m: Messages._PDF_WORD in m.text)(self.handle_pdf_to_word)
+        self.bot.message_handler(func=lambda m: Messages._UNLOCK_PDF in m.text)(self.handle_unlock_pdf)
+        self.bot.message_handler(func=lambda m: Messages._WORD_PDF in m.text)(self.handle_word_to_pdf)
+        self.bot.message_handler(func=lambda m: Messages._MERGE_PDF in m.text)(self.handle_merge_pdf)
+        self.bot.message_handler(func=lambda m: Messages._PDF_IMAGE in m.text)(self.handle_pdf_to_image)
+        self.bot.message_handler(func=lambda m: Messages._RENAME_FILE in m.text)(self.handle_rename_file)
+        self.bot.message_handler(func=lambda m: Messages._PPT_PDF in m.text)(self.handle_pptx_to_pdf)
+        self.bot.message_handler(func=lambda m: Messages._IMAGE_TEXT in m.text)(self.handle_image_to_text)
+        self.bot.message_handler(func=lambda m: Messages._QRCODE in m.text)(self.text_to_qrcode)
+        self.bot.message_handler(func=lambda m: Messages._TEXT_PDF in m.text)(self.text_to_pdf)
+        self.bot.message_handler(func=lambda m: Messages._BACK in m.text)(self.handle_start)
     
     def handle_start(self, message):
         """Handler for /start command."""
         file_utils.delete_user_content(message)
         file_utils.check_user_folder(message)
-        self.bot.send_message(message.chat.id, "Hello!\nChoose:", reply_markup=self.main_keyboard)
+        self.bot.send_message(message.chat.id, Messages.START, reply_markup=self.main_keyboard)
     
     def handle_image_to_pdf(self, message):
         """Handle the Image To PDF conversion process."""
@@ -72,10 +77,10 @@ class PDFConverterBot:
             # Download and save the image
             tg_helpers.get_image(self.bot, message, user_folder, file_utils.random_name)
             count = len(file_utils.list_files_by_time(user_folder))
-            self.bot.send_message(message.chat.id, f"PDF Pages : {count} \n Send Next :", reply_markup=self.finish_keyboard)
+            self.bot.send_message(message.chat.id, Messages.PDF_COUNT(count), reply_markup=self.finish_keyboard)
         elif tg_helpers.check_content_type(message, "text"):
             if message.text == "Finish":
-                wait_message = self.bot.send_message(message.chat.id, "Please wait ...")
+                wait_message = self.bot.send_message(message.chat.id, Messages.PLEASE_WAIT)
                 user_folder = file_utils.check_user_folder(message)
                 output_pdf = os.path.join(user_folder, f"{file_utils.random_name()}.pdf")
                 pdf_path = converters.convert_images_to_pdf(user_folder, output_pdf)
@@ -91,17 +96,17 @@ class PDFConverterBot:
             elif message.text == "Image To PDF":
                 user_folder = file_utils.check_user_folder(message)
                 if len(file_utils.list_files_by_time(user_folder)) == 0:
-                    self.bot.send_message(message.chat.id, "Send your photos:", reply_markup=self.back_keyboard)
+                    self.bot.send_message(message.chat.id, Messages.REQ_PHOTO, reply_markup=self.back_keyboard)
             else:
-                self.bot.send_message(message.chat.id, "Please just send a <b>photo</b>.", parse_mode="html", reply_markup=self.finish_keyboard)
+                self.bot.send_message(message.chat.id, Messages.PHOTO_ONLY, parse_mode="html", reply_markup=self.finish_keyboard)
         else:
-            self.bot.send_message(message.chat.id, "Please just send a <b>photo</b>.", parse_mode="html", reply_markup=self.finish_keyboard)
+            self.bot.send_message(message.chat.id, Messages.PHOTO_ONLY, parse_mode="html", reply_markup=self.finish_keyboard)
         
         self.bot.register_next_step_handler(message, self.handle_image_to_pdf)
     
     def handle_pdf_to_word(self, message):
         """Start the PDF to Word conversion process."""
-        self.bot.send_message(message.chat.id, "Please send your PDF file:", reply_markup=self.back_keyboard)
+        self.bot.send_message(message.chat.id, Messages.REQ_PDF ,reply_markup=self.back_keyboard)
         self.bot.register_next_step_handler(message, self.process_pdf_to_word)
     
     def process_pdf_to_word(self, message):
@@ -110,12 +115,12 @@ class PDFConverterBot:
             return
         
         if not tg_helpers.check_content_type(message, "document"):
-            self.bot.send_message(message.chat.id, "Please send only a PDF file ❗️")
+            self.bot.send_message(message.chat.id, Messages.PDF_ONLY)
             self.handle_start(message)
             return
         
         if not tg_helpers.check_file_size(message, 20):
-            self.bot.send_message(message.chat.id, "Please send a file under 20 MB ❗️")
+            self.bot.send_message(message.chat.id, Messages.FILE_SIZE_ERROR_20MB)
             self.handle_start(message)
             return
         
@@ -125,16 +130,16 @@ class PDFConverterBot:
         file_utils.save_file(file_content, pdf_path)
         
         if not converters.is_pdf_file(pdf_path):
-            self.bot.send_message(message.chat.id, "Please send only a valid PDF file ❗️")
+            self.bot.send_message(message.chat.id, Messages.INVALID_PDF)
             self.handle_start(message)
             return
 
         if converters.number_of_pdf_pages(pdf_path) > 10:
-            self.bot.send_message(message.chat.id, "The maximum number of pages allowed for a PDF file is 10 pages ❗️")
+            self.bot.send_message(message.chat.id, Messages.MAX_PAGE_ERROR_10)
             self.handle_start(message)
             return
         
-        wait_message = self.bot.send_message(message.chat.id, "Please wait ...")
+        wait_message = self.bot.send_message(message.chat.id, Messages.PLEASE_WAIT)
         output_docx = os.path.join(user_folder, f"{file_utils.random_name()}.docx")
         docx_path = converters.convert_pdf_to_docx(pdf_path, output_docx, OCR_TOKEN)
         if "False" in docx_path:
@@ -148,7 +153,7 @@ class PDFConverterBot:
     def handle_unlock_pdf(self, message):
         """Start the Unlock PDF process."""
         file_utils.check_user_folder(message)
-        self.bot.send_message(message.chat.id, "Please send your PDF file:", reply_markup=self.back_keyboard)
+        self.bot.send_message(message.chat.id, Messages.REQ_PHOTO, reply_markup=self.back_keyboard)
         self.bot.register_next_step_handler(message, self.process_unlock_pdf)
     
     def process_unlock_pdf(self, message):
@@ -157,15 +162,15 @@ class PDFConverterBot:
             return
         
         if not tg_helpers.check_content_type(message, "document"):
-            self.bot.send_message(message.chat.id, "Please send only a PDF file ❗️")
+            self.bot.send_message(message.chat.id, Messages.PDF_ONLY)
             self.handle_start(message)
             return
         
         if not tg_helpers.check_file_size(message, 20):
-            self.bot.send_message(message.chat.id, "Please send a file under 20 MB ❗️")
+            self.bot.send_message(message.chat.id, Messages.FILE_SIZE_ERROR_20MB)
             self.handle_start(message)
             return
-        wait_message = self.bot.send_message(message.chat.id, "Please wait ...")
+        wait_message = self.bot.send_message(message.chat.id, Messages.PLEASE_WAIT)
         file_content = tg_helpers.download_file(self.bot, message)
         user_folder = file_utils.check_user_folder(message)
         pdf_path = os.path.join(user_folder, f"{file_utils.random_name()}.pdf")
@@ -180,7 +185,7 @@ class PDFConverterBot:
     
     def handle_word_to_pdf(self, message):
         """Start the Word (DOCX) to PDF conversion process."""
-        self.bot.send_message(message.chat.id, "Please send your Word file:", reply_markup=self.back_keyboard)
+        self.bot.send_message(message.chat.id, Messages.REQ_WORD, reply_markup=self.back_keyboard)
         self.bot.register_next_step_handler(message, self.process_word_to_pdf)
     
     def process_word_to_pdf(self, message):
@@ -189,12 +194,12 @@ class PDFConverterBot:
             return
         
         if not tg_helpers.check_content_type(message, "document", ".docx"):
-            self.bot.send_message(message.chat.id, "Please send only a DOCX file ❗️")
+            self.bot.send_message(message.chat.id, Messages.WORD_ONLY)
             self.handle_start(message)
             return
         
         if not tg_helpers.check_file_size(message, 20):
-            self.bot.send_message(message.chat.id, "Please send a file under 20 MB ❗️")
+            self.bot.send_message(message.chat.id, Messages.FILE_SIZE_ERROR_20MB)
             self.handle_start(message)
             return
         file_content = tg_helpers.download_file(self.bot, message)
@@ -203,10 +208,10 @@ class PDFConverterBot:
         file_utils.save_file(file_content, docx_path)
         
         if not converters.is_docx_file(docx_path):
-            self.bot.send_message(message.chat.id, "Please send only a valid DOCX file ❗️")
+            self.bot.send_message(message.chat.id, Messages.WORD_ONLY)
             self.handle_start(message)
             return
-        wait_message = self.bot.send_message(message.chat.id, "Please wait ...")
+        wait_message = self.bot.send_message(message.chat.id, Messages.PLEASE_WAIT)
         output_pdf = os.path.join(user_folder, f"{file_utils.random_name()}.pdf")
         pdf_path = converters.convert_docx_to_pdf(docx_path, output_pdf)
         tg_helpers.send_document(self.bot, message.chat.id, pdf_path)
@@ -221,7 +226,7 @@ class PDFConverterBot:
                 self.handle_start(message)
                 return
             elif message.text == "Finish":
-                wait_message = self.bot.send_message(message.chat.id, "Please wait ...")
+                wait_message = self.bot.send_message(message.chat.id, Messages.PLEASE_WAIT)
                 user_folder = file_utils.check_user_folder(message)
                 pdf_list = file_utils.list_files_by_time(user_folder)
                 if pdf_list:
@@ -232,10 +237,10 @@ class PDFConverterBot:
                     self.handle_start(message)
                     return
             elif message.text == "Merge PDF":
-                self.bot.send_message(message.chat.id, "Please send your PDF file:", reply_markup=self.back_keyboard)
+                self.bot.send_message(message.chat.id, Messages.REQ_PDF, reply_markup=self.back_keyboard)
                 self.bot.register_next_step_handler(message, self.handle_merge_pdf)
             else:
-                self.bot.send_message(message.chat.id, "Please send only a PDF file ❗️")
+                self.bot.send_message(message.chat.id, Messages.PDF_ONLY)
                 self.handle_start(message)
                 return
         elif tg_helpers.check_content_type(message, "document", ".pdf"):
@@ -244,19 +249,19 @@ class PDFConverterBot:
             pdf_path = os.path.join(user_folder, f"{file_utils.random_name()}.pdf")
             file_utils.save_file(file_content, pdf_path)
             if not converters.is_pdf_file(pdf_path):
-                self.bot.send_message(message.chat.id, "Please send only a valid PDF file ❗️")
+                self.bot.send_message(message.chat.id, Messages.INVALID_PDF)
                 self.handle_start(message)
                 return
             count = len(file_utils.list_files_by_time(user_folder))
-            self.bot.send_message(message.chat.id, f"Received!\nCount of PDFs: {count}\nSend next:", reply_markup=self.finish_keyboard)
+            self.bot.send_message(message.chat.id, Messages.MERG_PDF_COUNT(count), reply_markup=self.finish_keyboard)
             self.bot.register_next_step_handler(message, self.handle_merge_pdf)
         else:
-            self.bot.send_message(message.chat.id, "Please send only a PDF file ❗️")
+            self.bot.send_message(message.chat.id, Messages.PDF_ONLY)
             self.handle_start(message)
             return
     def handle_pdf_to_image(self, message):
         """Handle convert pdf pages to JPEG file."""
-        self.bot.send_message(message.chat.id ,"Please send your PDF file for Conversion to image:", reply_markup=self.back_keyboard)
+        self.bot.send_message(message.chat.id , Messages.REQ_PDF, reply_markup=self.back_keyboard)
         self.bot.register_next_step_handler(message, self.process_pdf_to_image)
 
     def process_pdf_to_image(self, message):
@@ -265,12 +270,12 @@ class PDFConverterBot:
                 self.handle_start(message)
                 return
             else:
-                self.bot.send_message(message.chat.id ,"Please only send pdf file.")
+                self.bot.send_message(message.chat.id ,Messages.PDF_ONLY)
         if tg_helpers.check_is_pdf_by_message(message, self.bot) == False:
-            self.bot.send_message(message.chat.id ,"Please only send pdf file.")
+            self.bot.send_message(message.chat.id , Messages.PDF_ONLY)
             self.handle_start(message)
             return
-        wait_message = self.bot.send_message(message.chat.id, "Please wait ...")
+        wait_message = self.bot.send_message(message.chat.id, Messages.PLEASE_WAIT)
         user_folder = file_utils.check_user_folder(message)
         pdf = tg_helpers.download_file(self.bot, message)
         pdf_path = file_utils.save_file(pdf, f"{user_folder}/{file_utils.random_name()}")
@@ -282,7 +287,7 @@ class PDFConverterBot:
     
     def handle_rename_file(self, message):
         """Handle rename file"""
-        self.bot.send_message(message.chat.id, "Please send your file for rename:", reply_markup=self.back_keyboard)
+        self.bot.send_message(message.chat.id, Messages.REQ_FILE, reply_markup=self.back_keyboard)
         self.bot.register_next_step_handler(message, self.process_rename_file_get_file)
 
     def process_rename_file_get_file(self, message):
@@ -292,15 +297,15 @@ class PDFConverterBot:
                 self.handle_start(message)
                 return
             else:
-                self.bot.send_message(message.chat.id, "Please only send document ❗️")
+                self.bot.send_message(message.chat.id, Messages.DOC_ONLY)
                 self.handle_start(message)
                 return
         elif not tg_helpers.check_message_content_type(message, ["document","photo"]):
-            self.bot.send_message(message.chat.id, "Content type is invalid ❗️")
+            self.bot.send_message(message.chat.id, Messages.INVALID_CONTENT)
             self.handle_start(message)
             return
         elif not tg_helpers.check_file_size(message, 20):
-            self.bot.send_message(message.chat.id, "Please send a file under 20 MB ❗️")
+            self.bot.send_message(message.chat.id, Messages.FILE_SIZE_ERROR_20MB)
             self.handle_start(message)
             return
         user_folder = file_utils.check_user_folder(message)
@@ -314,15 +319,15 @@ class PDFConverterBot:
         file = tg_helpers.download_file(self.bot, message)
         output_path = os.path.join(user_folder, f"{file_utils.random_name()}.{file_extension}")
         file_utils.save_file(file, output_path)
-        self.bot.send_message(message.chat.id, "Enter new name :")
+        self.bot.send_message(message.chat.id, Messages.REQ_NEWNAME)
         self.bot.register_next_step_handler(message, self.process_rename_file)
     def process_rename_file(self, message):
         """Main process"""
         if not tg_helpers.check_message_content_type(message, "text"):
-            self.bot.send_message(message.chat.id, "Please only send text ❗️")
+            self.bot.send_message(message.chat.id, Messages.TEXT_ONLY)
             self.handle_start(message)
             return
-        wait_message = self.bot.send_message(message.chat.id, "Please wait ...")
+        wait_message = self.bot.send_message(message.chat.id, Messages.PLEASE_WAIT)
         user_folder = file_utils.check_user_folder(message)
         file_path = file_utils.list_files_by_time(user_folder)[0]
         new_name = message.text
@@ -333,7 +338,7 @@ class PDFConverterBot:
 
     def handle_pptx_to_pdf(self, message):
         """Handle Powerpoint to pdf"""
-        self.bot.send_message(message.chat.id, "Please send your powerpoint file :", reply_markup=self.back_keyboard)
+        self.bot.send_message(message.chat.id, Messages.REQ_PPTX, reply_markup=self.back_keyboard)
         self.bot.register_next_step_handler(message, self.process_pptx_to_pdf)
     
     def process_pptx_to_pdf(self, message):
@@ -342,15 +347,15 @@ class PDFConverterBot:
                 self.handle_start(message)
                 return
             else:
-                self.bot.send_message(message.chat.id, "Please only send document ❗️")
+                self.bot.send_message(message.chat.id, Messages.PPTX_ONLY)
                 self.handle_start(message)
                 return
         elif not tg_helpers.check_message_content_type(message, ["document"]):
-            self.bot.send_message(message.chat.id, "Content type is invalid ❗️")
+            self.bot.send_message(message.chat.id, Messages.INVALID_CONTENT)
             self.handle_start(message)
             return
         elif not tg_helpers.check_file_size(message, 20):
-            self.bot.send_message(message.chat.id, "Please send a file under 20 MB ❗️")
+            self.bot.send_message(message.chat.id, Messages.FILE_SIZE_ERROR_20MB)
             self.handle_start(message)
             return
         user_folder = file_utils.check_user_folder(message)
@@ -359,10 +364,10 @@ class PDFConverterBot:
         pptx_file = tg_helpers.download_file(self.bot, message)
         pptx_path = file_utils.save_file(pptx_file, pptx_file_path)
         if not converters.is_pptx_file(pptx_path):
-            self.bot.send_message(message.chat.id, "The file is invalid ❗️")
+            self.bot.send_message(message.chat.id, Messages.INVALIDE_FILE)
             self.handle_start(message)
             return
-        wait_message = self.bot.send_message(message.chat.id, "Please wait ...")
+        wait_message = self.bot.send_message(message.chat.id, Messages.PLEASE_WAIT)
         converters.convert_pptx_to_pdf(pptx_path, user_folder)
         # Here, user directory contains pptx and pdf file so the index 1 is the pdf path:
         pdf_path = file_utils.list_files_by_time(user_folder)[1]
@@ -373,7 +378,7 @@ class PDFConverterBot:
     
     def handle_image_to_text(self, message):
         """process to extract text from image"""
-        self.bot.send_message(message.chat.id ,"Please send your image to extract texts :", reply_markup=self.back_keyboard)
+        self.bot.send_message(message.chat.id , Messages.REQ_PHOTO, reply_markup=self.back_keyboard)
         self.bot.register_next_step_handler(message, self.process_image_to_text)
     
     def process_image_to_text(self, message):
@@ -382,21 +387,21 @@ class PDFConverterBot:
                 self.handle_start(message)
                 return
             else:
-                self.bot.send_message(message.chat.id, "Please only send document ❗️")
+                self.bot.send_message(message.chat.id, Messages.PHOTO_ONLY)
                 self.handle_start(message)
                 return
         if not tg_helpers.check_content_type(message, ("photo", "document")):
-            self.bot.send_message(message.chat.id, "Please just send a <b>photo</b>.", parse_mode="html")
+            self.bot.send_message(message.chat.id, Messages.PHOTO_ONLY, parse_mode="html")
             self.handle_start(message)
             return
-        wait_message = self.bot.send_message(message.chat.id, "Please wait ...")
+        wait_message = self.bot.send_message(message.chat.id, Messages.PLEASE_WAIT)
         user_folder = file_utils.check_user_folder(message)
         image_path = os.path.join(user_folder, f"{file_utils.random_name()}.jpg")
         image = tg_helpers.download_file(self.bot, message)
         image_path = file_utils.save_file(image, image_path)
         text = converters.image_to_text(image_path, OCR_TOKEN)
         if isinstance(text, tuple):
-            self.bot.send_message(message.chat.id, "An error occurred ❗️ Try again later.")
+            self.bot.send_message(message.chat.id, Messages.OCCURRED_ERROR)
             self.handle_start(message)
             return
         if text in "":
@@ -409,18 +414,18 @@ class PDFConverterBot:
     
     def text_to_qrcode(self, message):
         """convert text to qrcode"""
-        self.bot.send_message(message.chat.id, "Please Send your text :", reply_markup=self.back_keyboard)
+        self.bot.send_message(message.chat.id, Messages.REQ_TEXT, reply_markup=self.back_keyboard)
         self.bot.register_next_step_handler(message, self.process_text_to_qrcode)
     def process_text_to_qrcode(self, message):
         if not tg_helpers.check_content_type(message, "text"):
-            self.bot.send_message(message.chat.id, "Please only send text ❗️")
+            self.bot.send_message(message.chat.id, Messages.TEXT_ONLY)
             self.handle_start(message)
             return
         if "Back" in message.text:
             self.handle_start(message)
             return
         if len(message.text) > 1000:
-            self.bot.send_message(message.chat.id, "the text is too long ❗️")
+            self.bot.send_message(message.chat.id, Messages.TEXT_TOO_LONG)
             self.handle_start(message)
             return
         text = message.text
@@ -434,11 +439,11 @@ class PDFConverterBot:
     
     def text_to_pdf(self, message):
         """convert text to pdf file"""
-        self.bot.send_message(message.chat.id, "Please Send your text :", reply_markup=self.back_keyboard)
+        self.bot.send_message(message.chat.id, Messages.REQ_TEXT, reply_markup=self.back_keyboard)
         self.bot.register_next_step_handler(message, self.process_text_to_pdf)
     def process_text_to_pdf(self, message):
         if not tg_helpers.check_content_type(message, "text"):
-            self.bot.send_message(message.chat.id, "Please only send text ❗️")
+            self.bot.send_message(message.chat.id, Messages.TEXT_ONLY)
             self.handle_start(message)
             return
         if "Back" in message.text:
